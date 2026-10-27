@@ -10,7 +10,7 @@ This week's exercise is about turning what you know about the work into a plan s
 
 ## Make the case
 
-I've built **Make the Case**, an AI-guided method with a companion browser workspace.
+I've built **Make the Case**, a reusable kit for a personal AI coach that runs from your own Google Sheet with your own AI access.
 
 It helps you:
 
@@ -22,7 +22,7 @@ You do not need to be the person who builds the solution. Identifying the right 
 
 ## Try changing the assumption
 
-The workspace opens with a fictional client-services example. A coordinator wants to improve weekly account updates.
+The kit includes a fictional client-services example. A coordinator wants to improve weekly account updates.
 
 The working estimate releases 4.4 hours a month after checking, correction, and support. Increase the checking time and that apparent improvement disappears.
 
@@ -32,11 +32,13 @@ The forecast stays separate from achieved savings. Permissions, human responsibi
 
 ## Bring your own work
 
-Start with a recurring difficulty, one idea, several ideas, or an existing proposal. The starting guide includes a prompt for your approved AI assistant. The workspace can prepare a briefing containing your context and selected idea.
+Start with a recurring difficulty, one idea, several ideas, or an existing proposal. Open the coach and describe the work in your own words. Each question builds from the saved context and the case you are developing. Useful AI suggestions appear for review before they become part of your records.
 
 Keep the ideas you do not choose. Save the evidence and feedback. Return to the next opportunity without starting from a blank page.
 
-The written method is reusable, and the workspace can export a file you can reopen later. The browser workspace does not call an AI model or send your records automatically.
+The Sheet retains your ideas, evidence, feedback, and decisions so you can return to the case. It also keeps a contribution record: what you investigated, coordinated, checked, or helped deliver, with shared credit and supporting evidence.
+
+The kit supplies the Apps Script files, setup instructions, and a customization prompt. You configure your own Gemini API key and request limit. AI requests send the relevant case context to that service, so use information you are permitted to share. Saved memory helps you resume; it does not automatically train the underlying model.
 
 ## What I'm exploring
 
@@ -50,4 +52,4 @@ Try it with information you are permitted to use. Tell me what helped or what wa
 
 ---
 
-Publication note: add the final reader-accessible workspace and GitHub links when their intended access is confirmed. The current hosted preview is private. This file is a draft, not a published article.
+Publication note: add final reader-accessible kit and template links after Claude's `Coach.html` is integrated and the Google-account checks pass. The backend handoff is not yet a finished reader template. The current private hosted site is the earlier demonstration and is not the newsletter delivery. This file is a draft, not a published article.

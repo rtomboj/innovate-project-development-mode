@@ -7,7 +7,7 @@ const skill = fs.readFileSync(path.join(root,'skills/make-the-case/SKILL.md'),'u
 if (!/^---\r?\nname: make-the-case\r?\ndescription: [^\n]+\r?\n---/.test(skill)) failures.push('Skill frontmatter must contain the supported name and description.');
 if (/\b(?:TODO|TBD|INSERT HERE)\b/.test(skill)) failures.push('The skill contains unfinished scaffold text.');
 function walk(dir) { return fs.readdirSync(dir, { withFileTypes: true }).flatMap(e => ['.git','node_modules','.openai'].includes(e.name) ? [] : e.isDirectory() ? walk(path.join(dir,e.name)) : [path.join(dir,e.name)]); }
-for (const file of walk(root).filter(f => /\.(md|html|css|mjs)$/.test(f))) {
+for (const file of walk(root).filter(f => /\.(md|html|css|mjs|gs|json)$/.test(f))) {
   const text = fs.readFileSync(file, 'utf8');
   if (file.endsWith('.md')) {
     for (const m of text.matchAll(/\]\(([^)]+)\)/g)) {
