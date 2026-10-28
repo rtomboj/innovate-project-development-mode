@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const source = ['Core.gs', 'Code.gs'].map(f => fs.readFileSync(new URL('../apps-script/' + f, import.meta.url), 'utf8')).join('\n');
+const source = ['Core.gs', 'Providers.gs', 'Code.gs'].map(f => fs.readFileSync(new URL('../apps-script/' + f, import.meta.url), 'utf8')).join('\n');
 const clean = value => JSON.parse(JSON.stringify(value));
 
 function harness(shared) {
@@ -55,7 +55,7 @@ function harness(shared) {
   const call = (action, payload = {}) => clean(sandbox.api({ action, payload }));
   const boot = () => { const r = call('bootstrap'); assert.equal(r.ok, true, r.error); return r.data; };
   const create = (title = 'Improve weekly updates') => { const r = call('createIdea', { title, problem: 'Chasing information each Friday' }); assert.equal(r.ok, true, r.error); return r.data.ideas.at(-1); };
-  const configure = () => { const r = call('saveSettings', { apiKey: 'example-placeholder-not-a-real-key', model: 'gemini-3.8-flash', maxCallsPerDay: 20 }); assert.equal(r.ok, true, r.error); };
+  const configure = () => { const r = call('saveSettings', { provider: 'gemini', apiKey: 'example-placeholder-not-a-real-key', model: 'gemini-3.8-flash', maxCallsPerDay: 20 }); assert.equal(r.ok, true, r.error); };
   const response = (raw, options = {}) => state.responses.push({ body: { candidates: [{ finishReason: options.finishReason || 'STOP', content: { parts: [{ text: JSON.stringify(raw) }] } }], usageMetadata: { promptTokenCount: 100, candidatesTokenCount: 50, totalTokenCount: 180 } } });
   return { state, sandbox, call, boot, create, configure, response };
 }
@@ -118,7 +118,7 @@ test('17 ideas and saved context survive a fresh script runtime', () => {
 test('AI key stays in user properties and never appears in bootstrap, exports, or request URLs', () => {
   const h = ready(); h.configure(); const i = h.create(); h.response({ reply: 'What happened last Friday?', draft: null });
   const r = h.call('chat', { ideaId: i.id, message: 'Help me scope this', requestId: 'request-key-check' }); assert.equal(r.ok, true, r.error);
-  const key = h.state.user.get('MTC_API_KEY');
+  const key = h.state.user.get('MTC_KEY_GEMINI');
   assert.equal(JSON.stringify(h.boot()).includes(key), false); assert.equal(JSON.stringify(h.call('exportWorkspace')).includes(key), false);
   assert.equal(h.state.requests[0].url.includes(key), false); assert.equal(h.state.requests[0].options.headers['x-goog-api-key'], key);
   assert.equal(h.call('deleteKey').data.settings.hasKey, false); assert.equal(h.call('chat', { ideaId: i.id, message: 'Again', requestId: 'new-request-key-check' }).ok, false);
@@ -166,7 +166,7 @@ test('prompt carries relevant saved context and other ideas without the API key'
   h.call('chat', { ideaId: i.id, message: 'Where do I start?', requestId: 'request-context-check' });
   const payload = JSON.parse(h.state.requests[0].options.payload), reference = JSON.parse(payload.contents[0].parts[0].text);
   assert.equal(reference.context.company, 'Fictional Northstar'); assert.equal(reference.otherIdeas[0].title, other.title);
-  assert.equal(reference.recentMessages.at(-1).text, 'Where do I start?'); assert.equal(JSON.stringify(reference).includes(h.state.user.get('MTC_API_KEY')), false);
+  assert.equal(reference.recentMessages.at(-1).text, 'Where do I start?'); assert.equal(JSON.stringify(reference).includes(h.state.user.get('MTC_KEY_GEMINI')), false);
 });
 test('a changed case invalidates the prior AI draft', () => {
   const h = ready(); h.configure(); const i = h.create(); h.response({ reply: 'A question?', draft: { fields: { outcome: 'A proposed outcome' }, metrics: {}, reason: 'For review' } });
@@ -199,10 +199,110 @@ test('oversized audit data is rejected before changing the case', () => {
 });
 test('script files can initialize in either order', () => {
   const sandbox = {}; vm.createContext(sandbox);
-  for (const name of ['Code.gs', 'Core.gs']) vm.runInContext(fs.readFileSync(new URL('../apps-script/' + name, import.meta.url), 'utf8'), sandbox);
+  for (const name of ['Code.gs', 'Providers.gs', 'Core.gs']) vm.runInContext(fs.readFileSync(new URL('../apps-script/' + name, import.meta.url), 'utf8'), sandbox);
   assert.equal(sandbox.mtcTables_().Cases[4], 'status');
 });
 test('busy workspace and unsafe model IDs fail before sending a network request', () => {
   const h = ready(); h.state.busy = true; assert.match(h.call('bootstrap').error, /processing another request/); h.state.busy = false;
   assert.equal(h.call('saveSettings', { model: 'https://elsewhere.example', maxCallsPerDay: 20 }).ok, false); assert.equal(h.state.requests.length, 0);
+});
+
+test('new workspace requires a provider choice and exposes model suggestions without keys', () => {
+  const h = ready(), b = h.boot();
+  assert.equal(b.settings.provider, ''); assert.equal(b.settings.model, ''); assert.equal(b.settings.hasKey, false);
+  assert.deepEqual(b.settings.providers.map(p => p.id), ['gemini', 'anthropic', 'openai', 'openrouter', 'kimi']);
+  assert.ok(b.settings.providers.every(p => p.suggestions.length >= 2));
+  const i = h.create(); assert.match(h.call('chat', { ideaId: i.id, message: 'Hello', requestId: 'unconfigured-request' }).error, /Choose an AI provider/);
+});
+test('saved credentials and model selections remain separate for every provider', () => {
+  const h = ready();
+  for (const p of h.boot().settings.providers) {
+    const r = h.call('saveSettings', { provider: p.id, model: p.suggestions[0].id, maxCallsPerDay: 20, apiKey: 'not-a-real-credential-for-' + p.id });
+    assert.equal(r.ok, true, r.error); assert.equal(r.data.settings.provider, p.id);
+  }
+  const b = h.boot(); assert.ok(b.settings.providers.every(p => p.hasKey));
+  assert.equal(h.call('deleteKey', { provider: 'kimi' }).data.settings.providers.find(p => p.id === 'kimi').hasKey, false);
+  assert.equal(h.boot().settings.providers.find(p => p.id === 'openai').hasKey, true);
+  for (const p of b.settings.providers) {
+    assert.equal(JSON.stringify(h.call('exportWorkspace')).includes('not-a-real-credential-for-' + p.id), false);
+  }
+});
+test('legacy Gemini settings retain access and deletion removes the legacy key too', () => {
+  const h = ready(); h.state.user.set('MTC_API_KEY', 'legacy-placeholder-not-a-real-key'); h.state.user.set('MTC_MODEL', 'gemini-3.8-flash');
+  assert.equal(h.boot().settings.provider, 'gemini'); assert.equal(h.boot().settings.hasKey, true);
+  h.call('deleteKey', { provider: 'gemini' }); assert.equal(h.boot().settings.hasKey, false);
+});
+test('each provider routes only its own key and normalizes a valid response into the same reviewed draft', () => {
+  const fixtures = {
+    gemini: { host: 'generativelanguage.googleapis.com', model: 'gemini-3.8-flash', keyHeader: 'x-goog-api-key', body: raw => ({ candidates: [{ finishReason: 'STOP', content: { parts: [{ text: JSON.stringify(raw) }] } }], usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 5, totalTokenCount: 15 } }) },
+    anthropic: { host: 'api.anthropic.com', model: 'claude-sonnet-5-5', keyHeader: 'x-api-key', body: raw => ({ stop_reason: 'end_turn', content: [{ type: 'text', text: JSON.stringify(raw) }], usage: { input_tokens: 10, output_tokens: 5 } }) },
+    openai: { host: 'api.openai.com', model: 'gpt-6.1-sol', keyHeader: 'Authorization', body: raw => ({ status: 'completed', output: [{ type: 'reasoning', summary: [] }, { type: 'message', content: [{ type: 'output_text', text: JSON.stringify(raw) }] }], usage: { input_tokens: 10, output_tokens: 5, total_tokens: 15 } }) },
+    openrouter: { host: 'openrouter.ai', model: 'moonshotai/kimi-k2.6', keyHeader: 'Authorization', body: raw => ({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(raw) } }], usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 } }) },
+    kimi: { host: 'api.moonshot.ai', model: 'kimi-k2.6', keyHeader: 'Authorization', body: raw => ({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(raw), reasoning_content: 'Not user-facing output' } }], usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 } }) }
+  };
+  for (const [provider, f] of Object.entries(fixtures)) {
+    const h = ready(), key = 'not-a-real-credential-for-' + provider;
+    h.configure(); // A different saved provider must not leak to this request.
+    assert.equal(h.call('saveSettings', { provider, model: f.model, apiKey: key, maxCallsPerDay: 20 }).ok, true);
+    const i = h.create(), raw = { reply: 'Where did this estimate come from?', draft: { fields: { assumptions: 'Unmeasured estimate' }, metrics: { baselineMinutes: 22 }, reason: 'Review this estimate.' } };
+    h.state.responses.push({ body: f.body(raw) });
+    const r = h.call('chat', { ideaId: i.id, message: 'An estimate', requestId: 'request-provider-' + provider });
+    assert.equal(r.ok, true, provider + ': ' + r.error);
+    const sent = h.state.requests[0]; assert.equal(new URL(sent.url).hostname, f.host);
+    assert.equal(sent.options.headers[f.keyHeader], f.keyHeader === 'Authorization' ? 'Bearer ' + key : key);
+    assert.equal(sent.options.followRedirects, false);
+    assert.equal(r.data.idea.metrics.baselineMinutes, null); assert.equal(r.data.draft.metrics.baselineMinutes, 22);
+    assert.equal(r.data.usage.byProvider[provider].totalTokens, 15);
+    const exportData = h.call('exportWorkspace').data;
+    assert.equal(exportData.history.find(e => e.type === 'reply').data.provider, provider);
+    assert.equal(JSON.stringify(exportData).includes(key), false);
+    if (provider === 'openai') assert.equal(JSON.parse(sent.options.payload).store, false);
+    if (provider === 'kimi') assert.equal(JSON.parse(sent.options.payload).thinking.type, 'disabled');
+  }
+});
+test('provider switching cannot reset the total daily request limit', () => {
+  const h = ready(); h.configure(); h.call('saveSettings', { provider: 'gemini', model: 'gemini-3.8-flash', maxCallsPerDay: 1 }); const i = h.create();
+  h.response({ reply: 'A question?', draft: null }); h.call('chat', { ideaId: i.id, message: 'First', requestId: 'provider-limit-first' });
+  h.call('saveSettings', { provider: 'openai', model: 'gpt-6.1-sol', apiKey: 'not-a-real-openai-credential', maxCallsPerDay: 1 });
+  assert.match(h.call('chat', { ideaId: i.id, message: 'Second', requestId: 'provider-limit-second' }).error, /daily request limit/);
+  assert.equal(h.state.requests.length, 1);
+});
+test('an existing key is never reused for a newly selected provider without its own credential', () => {
+  const h = ready(); h.configure(); const i = h.create();
+  h.call('saveSettings', { provider: 'anthropic', model: 'claude-sonnet-5-5', maxCallsPerDay: 20 });
+  assert.match(h.call('chat', { ideaId: i.id, message: 'Hello', requestId: 'missing-provider-key' }).error, /selected provider/);
+  assert.equal(h.state.requests.length, 0);
+});
+test('all-provider redaction excludes inactive keys and legacy credentials from errors', () => {
+  const h = ready(); h.configure(); h.state.user.set('MTC_KEY_OPENAI', 'another-not-real-credential');
+  assert.equal(h.sandbox.mtcRedact_('example-placeholder-not-a-real-key another-not-real-credential'), '[redacted] [redacted]');
+});
+test('provider-specific refusals and truncated replies cannot update a case', () => {
+  const examples = [
+    ['anthropic', 'claude-sonnet-5-5', { stop_reason: 'max_tokens', content: [{ type: 'text', text: '{}' }] }],
+    ['openai', 'gpt-6.1-sol', { status: 'completed', output: [{ type: 'message', content: [{ type: 'refusal', refusal: 'No' }] }] }],
+    ['openai', 'gpt-6.1-sol', { status: 'incomplete', output: [] }],
+    ['openrouter', 'moonshotai/kimi-k2.6', { choices: [{ finish_reason: 'length', message: { content: '{}' } }] }],
+    ['kimi', 'kimi-k3', { choices: [{ finish_reason: 'stop', message: { content: '{}', refusal: 'No' } }] }]
+  ];
+  for (const [provider, model, body] of examples) {
+    const h = ready(); h.call('saveSettings', { provider, model, apiKey: 'not-a-real-provider-credential', maxCallsPerDay: 20 });
+    const i = h.create(); h.state.responses.push({ body });
+    assert.equal(h.call('chat', { ideaId: i.id, message: 'A question', requestId: 'request-rejected-' + provider }).ok, false);
+    assert.equal(h.boot().ideas[0].revision, 1);
+  }
+});
+test('explicit catalog refresh returns provider models without sending case context or counting a generation', () => {
+  const h = ready(); h.call('saveSettings', { provider: 'openrouter', model: 'moonshotai/kimi-k2.6', apiKey: 'not-a-real-openrouter-credential', maxCallsPerDay: 20 });
+  h.create('Private idea title');
+  h.state.responses.push({ body: { data: [ { id: 'moonshotai/kimi-k2.6', name: 'Kimi K2.6', supported_parameters: ['response_format'], architecture: { output_modalities: ['text'] } }, { id: 'image/model', supported_parameters: [], architecture: { output_modalities: ['image'] } } ] } });
+  const r = h.call('getModels', { provider: 'openrouter' }); assert.equal(r.ok, true, r.error); assert.equal(r.data.models.length, 1);
+  assert.equal(h.state.requests[0].options.method, 'get'); assert.equal(h.state.requests[0].options.payload, undefined); assert.equal(h.boot().usage.calls, 0);
+});
+test('manual model IDs allow supported provider formats and block foreign paths', () => {
+  const h = ready();
+  for (const [provider, model] of [['gemini', 'gpt-6.1-sol'], ['openai', 'gemini-3.8-flash'], ['openrouter', 'https://bad.example/model'], ['kimi', 'kimi-../escape'], ['anthropic', 'claude-foo?key=bad']]) {
+    assert.equal(h.call('saveSettings', { provider, model, maxCallsPerDay: 20 }).ok, false);
+  }
+  assert.equal(h.call('saveSettings', { provider: 'openrouter', model: 'vendor/custom-model:free', maxCallsPerDay: 20 }).ok, true);
 });

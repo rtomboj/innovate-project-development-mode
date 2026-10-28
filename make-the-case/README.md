@@ -6,7 +6,7 @@ Make the Case helps you develop an improvement, find the evidence and collaborat
 
 **[Google Sheets newsletter kit](apps-script/README.md)** · **[Claude HTML design prompt](apps-script/CLAUDE-DESIGN-PROMPT.md)** · **[See the fictional example](docs/northstar-example.md)** · **[Read the method](skills/make-the-case/SKILL.md)**
 
-The newsletter direction is now a **reader-owned Google Sheet with an Apps Script conversation interface and the reader's own AI key**. The version 0.2 backend, setup, API contract, and checks are included. Claude is designing `Coach.html` separately; that interface and live Google-account verification are pending. The existing browser screenshot and hosted preview below show the earlier demonstration, not the finished Sheets edition.
+The newsletter direction is a **reader-owned Google Sheet with an Apps Script conversation interface and the reader's own AI key**. Version 0.3 supports Gemini, Claude, OpenAI, OpenRouter, and Kimi through provider-specific adapters, keys, models, and suggestions. Claude is designing `Coach.html` separately; HTML integration and live account/provider verification are pending. The browser screenshot and hosted preview below show the earlier demonstration, not the finished Sheets edition.
 
 ![Checked fictional Northstar workspace](docs/images/workspace-desktop.jpg)
 
@@ -22,7 +22,7 @@ The newsletter direction is now a **reader-owned Google Sheet with an Apps Scrip
 
 ## Use the newsletter kit
 
-The [Apps Script edition](apps-script/README.md) creates the tracker, case records, evidence/cost view, context, and history in a reader's own Sheet. It includes server-side Gemini calls, user-specific key settings, reviewed AI drafts, persistent records, pitch output, usage limits, and export. Setup is designed for a bound dialog without a separate website deployment. Read [the exact handoff status](STATUS.md) before using or distributing it.
+The [Apps Script edition](apps-script/README.md) creates the tracker, case records, evidence/cost view, context, and history in a reader's own Sheet. It includes server-side provider adapters, user-specific key settings, reviewed AI drafts, persistent records, pitch output, usage limits, and export. Setup is designed for a bound dialog without a separate website deployment. Read [the exact handoff status](STATUS.md) before using or distributing it. An existing Claude interface can use [the provider-settings update prompt](apps-script/CLAUDE-PROVIDER-UPDATE.md).
 
 ## Earlier ways to explore the method
 
@@ -68,6 +68,6 @@ node scripts/check-package.mjs
 
 ## Status and evidence
 
-Version 0.1 is the working browser demonstration. Version 0.2 adds the reader-owned Sheets backend kit, with Claude's HTML and live Google checks still pending. Northstar people, records, and outcomes are fictional. See [validation](docs/validation.md) for actual checks and limitations, [research](docs/research.md) for the desk-research basis, and [release status](STATUS.md) for delivery details. The newsletter itself is the public experiment; a separately recruited reader test is not a prerequisite.
+Version 0.1 is the working browser demonstration. Version 0.3 is the reader-owned Sheets backend kit with five provider adapters; Claude's HTML integration and live checks are pending. Northstar people, records, and outcomes are fictional. See [validation](docs/validation.md) for actual checks and limitations, [research](docs/research.md) for the desk-research basis, and [release status](STATUS.md) for delivery details. The newsletter itself is the public experiment; a separately recruited reader test is not a prerequisite.
 
 Created by Rachel Wilde / Tomboj. Original code and written materials are licensed under [MIT](LICENSE), except linked third-party sources and brand identifiers. [Attribution](ATTRIBUTIONS.md) explains provenance.

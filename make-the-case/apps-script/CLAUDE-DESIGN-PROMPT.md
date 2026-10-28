@@ -22,7 +22,7 @@ Suggested tokens: page `#0b0c0e`, panel `#121418`, card `#262a31`, hover `#2d323
 
 Use the reference's sans/mono pairing, with local font stacks such as `Geist, system-ui, sans-serif` and `Geist Mono, ui-monospace, monospace`. Do not import the archive's Google Fonts URL; external requests remain disallowed. Raise conversational text to 15–16px with comfortable line spacing and keep useful metadata at least 11px. Do not copy tiny map labels into the reading experience.
 
-Translate the visual vocabulary into a conversational tool. Reader and coach messages can be calm outlined panels; an AI draft can use a violet card with a compact metadata band; a pending next decision can use an amber border and descriptive label. Use a small Collect / Develop / Advance progress spine only when supported by actual state. Keep the central conversation dominant. The backend has one Gemini call per submitted message; do not invent a visual team of concurrently running agents.
+Translate the visual vocabulary into a conversational tool. Reader and coach messages can be calm outlined panels; an AI draft can use a violet card with a compact metadata band; a pending next decision can use an amber border and descriptive label. Use a small Collect / Develop / Advance progress spine only when supported by actual state. Keep the central conversation dominant. The backend has one call to the selected AI provider per submitted message; do not invent a visual team of concurrently running agents.
 
 Use the ZIP as inspiration, not an instruction to reproduce a BPMN editor, swimlane canvas, all its symbols, React components, dependencies, or animations. Reimplement suitable card/header/chip treatments in self-contained vanilla HTML/CSS. Respect reduced motion; any request indicator must reflect a real outstanding request. Avoid a conventional admin dashboard, a wall of fields, and decorative AI effects.
 
@@ -35,8 +35,8 @@ Design for an approximately 1100 × 750 dialog, responsive to smaller windows. A
 - Show the developing case beside the conversation. Distinguish confirmed inputs, assumptions, open questions, scenario forecasts, and actual results.
 - Show AI-proposed changes with current/proposed values and their reason. Require review before saving. Explain when a draft is stale.
 - Include an editable case/pitch view, contribution fields, export, and resume behavior. These detail controls should not turn the opening into a form.
-- Provide key/model/daily-limit settings. Display a key-presence indicator, never the saved key. Clear the key input after saving, and keep it out of browser persistence.
-- Explain before the first AI request that current case, saved context, recent messages, and other idea titles go to Google's Gemini service. Make clear that Sheet access governs who can see the records.
+- Provide provider/model/key/daily-limit settings for Gemini, Claude, OpenAI, OpenRouter, and Kimi. Start with an explicit provider choice, then populate provider-specific model suggestions and an optional custom model ID. Follow [the settings update requirements](CLAUDE-PROVIDER-UPDATE.md), including separate saved keys and an optional explicit model-catalog refresh. Display key presence, never the saved key; clear unsaved key input on provider switch and after saving.
+- Explain before the first AI request what current case/context/messages go to the selected provider. For OpenRouter, describe routing to a model host. Repeat the disclosure when changing services. Make clear that Sheet access governs who can see the records.
 - Never claim the AI approved a project or verified an outcome. Proposed ownership remains unconfirmed. Financial savings and career outcomes are never invented.
 
 ## Connection requirements

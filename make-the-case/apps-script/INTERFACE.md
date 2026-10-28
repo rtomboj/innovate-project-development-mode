@@ -1,6 +1,6 @@
 # Coach.html integration contract
 
-Version 0.2.0. All application calls go through `api({action, payload})`. The `.gs` files are authoritative. Claude owns the HTML design; this contract fixes the connection points.
+Version 0.3.0. All application calls go through `api({action, payload})`. The `.gs` files are authoritative. Claude owns the HTML design; this contract fixes the connection points. Provider selection is now explicit: Gemini, Claude, OpenAI, OpenRouter, or Kimi. See [the settings update prompt](CLAUDE-PROVIDER-UPDATE.md).
 
 ```js
 function call(action, payload = {}) {
@@ -26,29 +26,44 @@ All return values are JSON-safe. Do not call private helpers. Do not make direct
 | `chat` | `{ideaId, message, requestId}` | `{idea, messages, draft, forecast, usage}` |
 | `acceptDraft` | `{ideaId, draftId, revision}` | Workspace view |
 | `updateIdea` | `{ideaId, patch, revision}` | Workspace view |
-| `saveSettings` | `{apiKey?, model, maxCallsPerDay}` | Workspace view |
-| `deleteKey` | `{}` | Workspace view |
+| `saveSettings` | `{provider, apiKey?, model, maxCallsPerDay, workspaceId?}` | Workspace view |
+| `deleteKey` | `{provider}` | Workspace view; removes only that provider's key |
+| `getModels` | `{provider}` | Provider catalog result below |
 | `exportWorkspace` | `{}` | Export object with schema/context/ideas/history/settings/usage |
 | `deleteIdea` | `{ideaId, revision}` | Workspace view; removes that case and its history |
 | `refresh` | `{}` | Workspace view |
 
-`patch` accepts only `{title?, fields?: {...}, metrics?: {...}}`. Revision is a required integer from the current idea. Do not increment it locally. A stale revision is rejected. Unknown keys are errors. `saveSettings` omits `apiKey` or supplies an empty string to keep an existing key. The UI must clear its key input after saving; keys must never enter browser persistence or demonstration data. A key can be deleted only with `deleteKey`.
+`patch` accepts only `{title?, fields?: {...}, metrics?: {...}}`. Revision is a required integer from the current idea. Do not increment it locally. A stale revision is rejected. Unknown keys are errors. Provider IDs are `gemini`, `anthropic`, `openai`, `openrouter`, `kimi`. `saveSettings` omits `apiKey` or supplies an empty string to keep that provider's existing key. Switching providers never reuses another service's key. The UI must clear its key input after saving; keys must never enter browser persistence or demonstration data. A key can be deleted only with `deleteKey`. `workspaceId` is optional for Anthropic keys that need a workspace header; it is not a secret.
 
 ## Workspace view
 
 ```json
 {
   "schema": "tomboj.make-the-case.sheets.v1",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "context": {"company":"", "role":"", "goal":"", "constraints":"", "preferences":"", "selectedId":"optional saved ID"},
   "selectedId": null,
   "ideas": [],
-  "settings": {"hasKey":false, "model":"gemini-3.8-flash", "maxCallsPerDay":20},
+  "settings": {
+    "provider":"", "hasKey":false, "model":"", "maxCallsPerDay":20,
+    "workspaceId":"", "suggestionsCheckedAt":"2026-10-28",
+    "providers":[
+      {"id":"gemini", "label":"Google Gemini", "hasKey":false, "model":"gemini-3.8-flash",
+       "suggestions":[{"id":"gemini-3.8-flash", "label":"Gemini 3.8 Flash — general coaching"}],
+       "docs":"https://ai.google.dev/gemini-api/docs/models"}
+    ]
+  },
   "usage": {"date":"2026-10-27", "timezone":"UTC", "calls":0, "promptTokens":0, "outputTokens":0, "totalTokens":0}
 }
 ```
 
-`selectedId` is null when no ideas exist. Bootstrap does not create a placeholder idea. On the first actual user message, create an idea with a working title such as "Explore my work", then call chat with the returned selected ID. If a key is missing, show settings before sending. AI-call disclosure must appear before the first call; it explains the saved context, selected case, recent messages, and other idea titles sent to Google's Gemini service.
+The example above abbreviates `settings.providers`; the actual array includes all five services, per-provider key-presence indicators, remembered models, suggestions, and documentation links. A new installation has an empty active provider/model. Show an explicit “Choose your AI provider” placeholder, and do not automatically select the first option. Older Gemini installations retain their saved provider. The global daily limit applies across provider switches. Usage additionally includes `byProvider` counters after a generation attempt.
+
+On provider selection, populate model suggestions and the saved model from that entry, then offer “Other model ID”. Do not copy the old provider's model or key input to the new one. The selected provider is not active until Save succeeds. Suggestions are a dated starting point, not a promise of access, price, quality, or compatibility.
+
+`getModels` is an explicit server-side model-catalog lookup using that provider's saved key. It sends no case data and makes no text-generation request. It returns `{provider, models:[{id,label}], source:"provider-catalog", checkedAt, hasMore, note}`. Refresh only on a reader action, keep the current model selected, and show an error without changing saved settings. Catalog refresh may be incomplete; manual IDs remain available. A catalog entry is not proof it accepts this app's structured request.
+
+`selectedId` is null when no ideas exist. Bootstrap does not create a placeholder idea. On the first actual user message, create an idea with a working title such as "Explore my work", then call chat with the returned selected ID. If a provider or key is missing, show settings before sending. AI-call disclosure must name the selected service and explain the saved context, selected case, recent messages, and other idea titles being sent. For OpenRouter, explain that it routes to a model host. Show the disclosure again when the destination provider changes.
 
 ## Idea view
 

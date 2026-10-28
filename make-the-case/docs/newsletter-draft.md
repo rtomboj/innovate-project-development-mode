@@ -38,7 +38,7 @@ Keep the ideas you do not choose. Save the evidence and feedback. Return to the 
 
 The Sheet retains your ideas, evidence, feedback, and decisions so you can return to the case. It also keeps a contribution record: what you investigated, coordinated, checked, or helped deliver, with shared credit and supporting evidence.
 
-The kit supplies the Apps Script files, setup instructions, and a customization prompt. You configure your own Gemini API key and request limit. AI requests send the relevant case context to that service, so use information you are permitted to share. Saved memory helps you resume; it does not automatically train the underlying model.
+The kit supplies the Apps Script files, setup instructions, and a customization prompt. Choose Gemini, Claude, OpenAI, OpenRouter, or Kimi, with a suggested or custom model and your own key for that service. Set a request limit. AI requests send the relevant case context to the selected service, so use information you are permitted to share. Saved memory helps you resume; it does not automatically train the underlying model.
 
 ## What I'm exploring
 

@@ -103,8 +103,13 @@ function api(request) {
         mtcSaveIdea_(updated); mtcHistory_(record.id, 'edited', '', 'Reader updated the case', { patch: p.patch, revision: updated.revision }, at);
         mtcRefreshViews_(); data = mtcBootstrap_(); break;
       case 'saveSettings': data = mtcSaveSettings_(p); break;
+      case 'getModels': data = mtcGetModels_(p); break;
       case 'deleteKey':
-        mtcKeys_(p, []); PropertiesService.getUserProperties().deleteProperty('MTC_API_KEY'); data = mtcBootstrap_(); break;
+        mtcKeys_(p, ['provider']);
+        var deleteProvider = mtcProvider_(p.provider || mtcSelectedProvider_()).id;
+        PropertiesService.getUserProperties().deleteProperty('MTC_KEY_' + deleteProvider.toUpperCase());
+        if (deleteProvider === 'gemini') PropertiesService.getUserProperties().deleteProperty('MTC_API_KEY');
+        data = mtcBootstrap_(); break;
       case 'exportWorkspace':
         mtcKeys_(p, []); data = { schema: MTC.schema, version: MTC.version, exportedAt: at,
           context: mtcContext_(), ideas: mtcIdeas_(), history: mtcHistoryRows_(), settings: mtcSettings_(), usage: mtcUsage_() }; break;
@@ -118,9 +123,7 @@ function api(request) {
     return { ok: true, data: data };
   } catch (e) {
     // Never include an upstream response, request payload, or key in an error.
-    var message = String(e.message || 'The request could not be completed.').slice(0, 600);
-    var key = PropertiesService.getUserProperties().getProperty('MTC_API_KEY');
-    if (key) message = message.split(key).join('[redacted]');
+    var message = mtcRedact_(e.message || 'The request could not be completed.').slice(0, 600);
     return { ok: false, error: message };
   } finally { if (acquired) lock.releaseLock(); }
 }
@@ -232,19 +235,28 @@ function mtcBootstrap_() {
     ideas: ideas.map(function (i) { return mtcView_(i, context, history); }), settings: mtcSettings_(), usage: mtcUsage_() };
 }
 function mtcSettings_() {
-  var props = PropertiesService.getUserProperties(), limit = Number(props.getProperty('MTC_DAILY_LIMIT') || 20);
-  return { hasKey: !!props.getProperty('MTC_API_KEY'), model: props.getProperty('MTC_MODEL') || MTC.defaultModel, maxCallsPerDay: limit };
+  var props = PropertiesService.getUserProperties(), limit = Number(props.getProperty('MTC_DAILY_LIMIT') || 20), selected = mtcSelectedProvider_();
+  var providers = mtcProviders_().map(function (p) { return { id: p.id, label: p.label, hasKey: !!mtcProviderKey_(p.id),
+    model: mtcProviderModel_(p.id), suggestions: p.suggestions, docs: p.docs }; });
+  return { provider: selected, hasKey: !!selected && !!mtcProviderKey_(selected),
+    model: selected ? mtcProviderModel_(selected) : '', maxCallsPerDay: limit, providers: providers,
+    suggestionsCheckedAt: '2026-10-28', workspaceId: props.getProperty('MTC_ANTHROPIC_WORKSPACE') || '' };
 }
 function mtcSaveSettings_(p) {
-  mtcKeys_(p, ['apiKey', 'model', 'maxCallsPerDay']);
-  var model = mtcText_(p.model, 100, 'Model');
-  if (!/^gemini-[a-z0-9][a-z0-9.\-]{0,80}$/.test(model)) throw new Error('Enter a Gemini model ID from Google\'s current model list.');
+  mtcKeys_(p, ['provider', 'apiKey', 'model', 'maxCallsPerDay', 'workspaceId']);
+  var provider = mtcProvider_(p.provider || mtcSelectedProvider_()).id, model = mtcValidateModel_(provider, p.model);
   if (!Number.isInteger(p.maxCallsPerDay) || p.maxCallsPerDay < 1 || p.maxCallsPerDay > 100) throw new Error('Choose a daily request limit from 1 to 100.');
-  var settings = { MTC_MODEL: model, MTC_DAILY_LIMIT: String(p.maxCallsPerDay) };
+  var settings = { MTC_PROVIDER: provider, MTC_DAILY_LIMIT: String(p.maxCallsPerDay) };
+  settings['MTC_MODEL_' + provider.toUpperCase()] = model;
   if (Object.prototype.hasOwnProperty.call(p, 'apiKey') && p.apiKey !== '') {
-    var key = mtcText_(p.apiKey, 200, 'API key').trim();
-    if (!/^[a-zA-Z0-9_\-]{20,200}$/.test(key)) throw new Error('Enter the API key without spaces or quotes.');
-    settings.MTC_API_KEY = key;
+    var key = mtcText_(p.apiKey, 500, 'API key').trim();
+    if (!/^[a-zA-Z0-9_.~:/+=\-]{20,500}$/.test(key)) throw new Error('Enter the API key without spaces or quotes.');
+    settings['MTC_KEY_' + provider.toUpperCase()] = key;
+  }
+  if (Object.prototype.hasOwnProperty.call(p, 'workspaceId')) {
+    var workspace = mtcText_(p.workspaceId, 100, 'Anthropic workspace ID');
+    if (workspace && !/^wrkspc_[a-zA-Z0-9]+$/.test(workspace)) throw new Error('Enter an Anthropic workspace ID beginning wrkspc_, or leave it empty.');
+    settings.MTC_ANTHROPIC_WORKSPACE = workspace;
   }
   PropertiesService.getUserProperties().setProperties(settings);
   return mtcBootstrap_();
@@ -267,40 +279,43 @@ function mtcChat_(p, at) {
     return mtcChatResult_(idea.id);
   }
   if (history.length + 3 > MTC.maxHistory) throw new Error('History is nearly full. Export/archive the workspace before another AI request.');
-  var settings = mtcSettings_(), key = PropertiesService.getUserProperties().getProperty('MTC_API_KEY');
-  if (!key) throw new Error('Add your own AI API key in settings before sending a message.');
+  var settings = mtcSettings_();
+  if (!settings.provider) throw new Error('Choose an AI provider and model in settings before sending a message.');
+  var key = mtcProviderKey_(settings.provider);
+  if (!key) throw new Error('Add your own API key for the selected provider before sending a message.');
   var usage = mtcUsage_();
   if (usage.calls >= settings.maxCallsPerDay) throw new Error('Your daily request limit has been reached. It resets at midnight UTC.');
   var messages = mtcMessages_(idea.id, history).concat([{ role: 'user', text: message, at: at }]);
   var context = mtcContext_(), prompt = mtcPrompt_(context, idea, messages, mtcIdeas_());
+  var providerRequest = mtcProviderRequest_(settings.provider, settings.model, key, prompt);
   // Count attempts before the network call. Failed attempts may still consume provider resources.
-  usage.calls += 1; PropertiesService.getUserProperties().setProperty('MTC_USAGE', JSON.stringify(usage));
-  mtcHistory_(idea.id, 'request', requestId, message, { baseRevision: idea.revision }, at);
+  usage.calls += 1;
+  usage.byProvider = usage.byProvider || {};
+  usage.byProvider[settings.provider] = usage.byProvider[settings.provider] || { calls: 0, promptTokens: 0, outputTokens: 0, totalTokens: 0 };
+  usage.byProvider[settings.provider].calls += 1;
+  PropertiesService.getUserProperties().setProperty('MTC_USAGE', JSON.stringify(usage));
+  mtcHistory_(idea.id, 'request', requestId, message, { baseRevision: idea.revision, provider: settings.provider, model: settings.model }, at);
   try {
     var response;
-    try { response = UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(settings.model) + ':generateContent', {
-      method: 'post', contentType: 'application/json', headers: { 'x-goog-api-key': key }, muteHttpExceptions: true,
-      payload: JSON.stringify({ systemInstruction: { parts: [{ text: mtcSystemPrompt_() }] },
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: { responseFormat: { text: { mimeType: 'APPLICATION_JSON', schema: mtcResponseSchema_() } }, maxOutputTokens: 4096 } })
-    }); } catch (networkError) { throw new Error('The AI request could not reach the service. No record changes were accepted.'); }
+    try { response = UrlFetchApp.fetch(providerRequest.url, providerRequest.options); }
+    catch (networkError) { throw new Error('The AI request could not reach the selected service. No record changes were accepted.'); }
     var code = response.getResponseCode();
     if (code !== 200) throw new Error(code === 429 ? 'The AI service rate or quota limit was reached. Check your provider account.' : 'The AI service returned HTTP ' + code + '. Check the model, key, and provider settings.');
     var body;
     try { body = JSON.parse(response.getContentText()); } catch (parseError) { throw new Error('The AI service returned an unreadable response.'); }
-    var tokens = body.usageMetadata || {};
-    [['promptTokens', 'promptTokenCount'], ['outputTokens', 'candidatesTokenCount'], ['totalTokens', 'totalTokenCount']].forEach(function (keys) {
-      var amount = tokens[keys[1]]; if (typeof amount === 'number' && isFinite(amount) && amount >= 0) usage[keys[0]] = (usage[keys[0]] || 0) + amount;
+    var normalized = mtcProviderOutput_(settings.provider, body);
+    ['promptTokens', 'outputTokens', 'totalTokens'].forEach(function (name) {
+      usage[name] = (usage[name] || 0) + normalized.tokens[name];
+      usage.byProvider[settings.provider][name] += normalized.tokens[name];
     });
     PropertiesService.getUserProperties().setProperty('MTC_USAGE', JSON.stringify(usage));
-    var candidate = body.candidates && body.candidates[0];
-    if (!candidate || candidate.finishReason !== 'STOP' || !candidate.content || !candidate.content.parts) throw new Error('The AI response was blocked or incomplete. No suggested changes were saved.');
-    var output = candidate.content.parts.filter(function (part) { return !part.thought && typeof part.text === 'string'; }).map(function (part) { return part.text; }).join('');
+    if (!normalized.complete) throw new Error('The AI response was blocked or incomplete. No suggested changes were saved.');
+    var output = normalized.text;
     if (output.length > 35000) throw new Error('The AI response was too long. Try a smaller question.');
     var raw;
     try { raw = JSON.parse(output); } catch (jsonError) { throw new Error('The AI response did not match the required JSON format.'); }
     var validated = mtcValidateAI_(raw, idea, Utilities.getUuid(), at);
-    mtcHistory_(idea.id, 'reply', requestId, validated.reply, { draft: validated.draft }, new Date().toISOString());
+    mtcHistory_(idea.id, 'reply', requestId, validated.reply, { draft: validated.draft, provider: settings.provider, model: settings.model }, new Date().toISOString());
     return mtcChatResult_(idea.id);
   } catch (e) {
     mtcHistory_(idea.id, 'error', requestId, 'AI request failed; saved case unchanged', {}, new Date().toISOString());

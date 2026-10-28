@@ -1,16 +1,16 @@
 # Validation record
 
-October 27, 2026. Sheets backend kit 0.2.0 and browser demonstration 0.1.
+October 28, 2026. Sheets backend kit 0.3.0 and browser demonstration 0.1.
 
 ## Sheets backend checks
 
-The actual `Core.gs` and `Code.gs` files run in a Node sandbox with simulated Google Sheets, Properties, Lock, UUID, and URL Fetch services. All 23 Apps Script tests pass, in addition to the original 16 browser-model tests (39 total).
+The actual `Core.gs`, `Providers.gs`, and `Code.gs` files run in a Node sandbox with simulated Google Sheets, Properties, Lock, UUID, and URL Fetch services. All 33 Apps Script tests pass, in addition to the original 16 browser-model tests (49 total).
 
 The new tests cover repeatable setup, conflicting headers, unknown versus zero inputs, changing review/support burden, complete financial cost arithmetic, invalid metric/field rejection, Testing permission references, stale writes, persistence of 17 ideas and context across a fresh script runtime, credential exclusion from bootstrap/export/URLs, draft review and acceptance, protected model fields, malformed model data, request deduplication, failed/truncated/network responses, daily attempt limits and reported tokens, relevant prompt context, draft invalidation, literal spreadsheet text, case/history deletion, history capacity, oversized audit data, file load order, busy workspaces, and model-path validation.
 
-The outgoing request uses the current documented Gemini REST structured-response format and a model ID checked against Google's official list. This is a source/code check, not a successful API call. No real key or company data was used. The spreadsheet and provider behavior in these tests are simulations.
+The provider tests exercise all five outgoing request formats and normalize representative replies into the same reviewed draft. They also check a neutral initial provider state, isolated keys and remembered models, legacy Gemini access, refusal/truncation handling, a daily limit across provider switches, inactive-key redaction, metadata-only catalog lookup, and manual model-ID validation. Sources for request formats and suggested IDs are listed in the Apps Script guide. These are code/simulated-response checks, not successful live calls. No real key or company data was used.
 
-Claude is designing `Coach.html` separately at Rachel's request. The UI is not supplied in this backend handoff. A real Google Sheet, authorization flow, actual Gemini request, saved key handling under Google execution identities, native formatting, and integrated HTML behavior remain to be checked. Reader setup instructions retain those checks before newsletter release. No external user recruitment is required.
+Claude is designing `Coach.html` separately at Rachel's request. A settings screenshot was supplied, but the actual UI file is not in this backend handoff. A real Google Sheet, authorization flow, actual requests for the release providers/models, saved-key handling under Google execution identities, native formatting, and integrated HTML behavior remain to be checked. Reader setup instructions retain those checks before newsletter release. No external user recruitment is required.
 
 The .gs code is a bound-dialog application, not a public web app or an enterprise multi-tenant service. It retrieves recent messages and accepted structured records as memory. It does not train a model. Export is a record download, not an import/restore feature. Sheets writes are not transactional; failure recovery requires checking saved records and refreshing derived views.
 
