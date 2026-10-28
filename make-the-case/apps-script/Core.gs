@@ -1,7 +1,7 @@
 /* Pure record and calculation functions. No Google services or credentials here. */
 var MTC = {
   schema: 'tomboj.make-the-case.sheets.v1',
-  version: '0.3.0',
+  version: '0.3.1',
   fields: ['status', 'problem', 'outcome', 'currentWork', 'proposedWork', 'exclusions',
     'selectionReason', 'originator', 'businessOwner', 'collaborators', 'audiences', 'learning',
     'permissions', 'reviewer', 'approvalEvidence', 'baselineSource', 'evidence', 'assumptions',

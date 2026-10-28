@@ -1,6 +1,6 @@
 # Coach.html integration contract
 
-Version 0.3.0. All application calls go through `api({action, payload})`. The `.gs` files are authoritative. Claude owns the HTML design; this contract fixes the connection points. Provider selection is now explicit: Gemini, Claude, OpenAI, OpenRouter, or Kimi. See [the settings update prompt](CLAUDE-PROVIDER-UPDATE.md).
+Version 0.3.1 (additive to 0.3.0). All application calls go through `api({action, payload})`. The `.gs` files are authoritative. Claude's supplied HTML design is included with local integration fixes. Provider selection is explicit: Gemini, Claude, OpenAI, OpenRouter, or Kimi. See [the settings update prompt](CLAUDE-PROVIDER-UPDATE.md).
 
 ```js
 function call(action, payload = {}) {
@@ -40,7 +40,7 @@ All return values are JSON-safe. Do not call private helpers. Do not make direct
 ```json
 {
   "schema": "tomboj.make-the-case.sheets.v1",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "context": {"company":"", "role":"", "goal":"", "constraints":"", "preferences":"", "selectedId":"optional saved ID"},
   "selectedId": null,
   "ideas": [],
@@ -73,12 +73,14 @@ On provider selection, populate model suggestions and the saved model from that 
   "updatedAt":"2026-10-27T12:00:00.000Z",
   "fields":{"status":"Exploring", "permissions":"Unknown", "problem":""},
   "metrics":{"volume":null},
-  "messages":[{"role":"user", "text":"A rough thought", "at":"2026-10-27T12:00:00.000Z"}],
+  "messages":[{"role":"user", "text":"A rough thought", "at":"2026-10-27T12:00:00.000Z", "requestId":"stable request ID", "status":"replied"}],
   "messageCount":1, "draft":null, "forecast":{}, "pitch":"# Working title\n..."
 }
 ```
 
 All listed fields and metrics below are present, even when empty/null. The code sends at most 40 recent messages per idea to the interface, with the total `messageCount`. History retains the older messages. Tell users when older messages are not displayed. After chat, replace the relevant idea in client state with `data.idea` and update usage. Other mutations return the entire workspace view; replace workspace state with it.
+
+Message metadata is additive: user messages have status `replied`, `failed`, or `unanswered`; assistant replies have status `saved`. Display failed/unanswered labels when reopening. `unanswered` means no saved reply or failure record exists, not proof a request is currently running. Older demonstration messages may omit this metadata. An uncertain same-ID retry may retrieve a saved reply even after the daily limit is reached; a genuinely new request remains subject to that limit. Do not retry an uncertain request on a different provider/model.
 
 ### Text fields
 

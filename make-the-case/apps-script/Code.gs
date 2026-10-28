@@ -210,8 +210,11 @@ function mtcHistoryCapacity_(count, data) {
   if (JSON.stringify(data).length > 40000) throw new Error('This update is too long to record. Save smaller changes.');
 }
 function mtcMessages_(id, history) {
-  return history.filter(function (e) { return e.ideaId === id && (e.type === 'request' || e.type === 'reply'); })
-    .map(function (e) { return { role: e.type === 'request' ? 'user' : 'assistant', text: e.text, at: e.at }; });
+  var entries = history.filter(function (e) { return e.ideaId === id; }), replied = {}, failed = {};
+  entries.forEach(function (e) { if (e.type === 'reply') replied[e.requestId] = true; if (e.type === 'error') failed[e.requestId] = true; });
+  return entries.filter(function (e) { return e.type === 'request' || e.type === 'reply'; })
+    .map(function (e) { return { role: e.type === 'request' ? 'user' : 'assistant', text: e.text, at: e.at,
+      requestId: e.requestId, status: e.type === 'reply' ? 'saved' : replied[e.requestId] ? 'replied' : failed[e.requestId] ? 'failed' : 'unanswered' }; });
 }
 function mtcDraft_(idea, history) {
   var entries = history.filter(function (e) { return e.ideaId === idea.id && e.type === 'reply'; });

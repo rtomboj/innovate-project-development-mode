@@ -2,13 +2,14 @@
 
 This is the reader-owned Automation Thursday edition. A bound Apps Script creates the tracker and persistent records in your Sheet. An HTML coach calls the script using your own key for Gemini, Claude, OpenAI, OpenRouter, or Kimi. The earlier hosted browser workspace remains a separate demonstration.
 
-**Current handoff:** the backend, setup, interface contract, and tests are included. The final `Coach.html` is being designed separately in Claude at Rachel's request. This folder deliberately contains no substitute design. Add that file and complete the Google-account checks below before distributing a working template. No live Sheet, live model run, or finished HTML integration is claimed.
+**Current handoff:** Claude's supplied `Coach.html` is integrated with the current backend contract and included in this kit. Local review fixed missing action controls, incomplete-reply retry handling, and message-state labels. Automated and local browser checks are recorded in [validation](../docs/validation.md). Complete the real Google-account/provider checks below before distributing a verified template. No live Sheet, authorization flow, or live provider run is claimed.
 
 ## Files
 
 - `Core.gs`: record rules, scenario calculations, pitch, coaching instructions, and model-response validation.
 - `Code.gs`: spreadsheet setup, menus, saved records, credential handling, AI requests, and the HTML gateway.
 - `Providers.gs`: provider/model suggestions, isolated credentials, five API adapters, and explicit catalog lookup.
+- `Coach.html`: Claude's conversational interface, with local integration fixes. It runs a clearly labeled fictional demonstration outside Google Sheets.
 - `appsscript.json`: minimal declared Google permissions and V8 runtime.
 - [Interface contract](INTERFACE.md): exact API, fields, response shapes, and loading/retry behavior for Claude.
 - [Claude design prompt](CLAUDE-DESIGN-PROMPT.md): reusable brief for the HTML file.
@@ -21,7 +22,7 @@ This is the reader-owned Automation Thursday edition. A bound Apps Script create
 1. Create a **new, blank Google Sheet** in an account that permits Apps Script and the intended AI use.
 2. Choose **Extensions → Apps Script**. Replace the starter `Code.gs` with the supplied `Code.gs`. Add scripts named `Core` and `Providers` with the supplied `Core.gs` and `Providers.gs`. All three must be in the same Apps Script project.
 3. In the script editor's project settings, enable displaying the manifest. Replace `appsscript.json` with the supplied manifest.
-4. Add an HTML file named **Coach** and paste Claude's finished `Coach.html`. Supply Claude with [the design prompt](CLAUDE-DESIGN-PROMPT.md), [visual direction](DESIGN-DIRECTION.md), and [interface contract](INTERFACE.md). Keep the gateway unchanged.
+4. Add an HTML file named **Coach** and paste the included `Coach.html`. For design changes, use [the design prompt](CLAUDE-DESIGN-PROMPT.md), [visual direction](DESIGN-DIRECTION.md), and [interface contract](INTERFACE.md). Keep the gateway unchanged.
 5. Save, select `setupWorkspace`, and run it once. Review Google's authorization screen. The declared permissions cover this spreadsheet, its interface, and external requests. The code contains no Gmail, Drive-wide, or company-system integration.
 6. Return to the Sheet and reload it. Choose **Make the Case → Open coach**.
 7. Choose an AI provider, a suggested or custom model, and your own key for that service. New copies start without a selected provider. Existing Gemini setups retain their configuration. Model suggestions were checked October 28, 2026; access, supported features, and pricing can change. Optional **Refresh models** retrieves a catalog using that provider's saved key, without sending case data. The default limit is **20 attempted AI requests per UTC day across all providers**, editable from 1 to 100.
@@ -63,7 +64,7 @@ Apps Script and the model provider impose quotas. The bound script holds a docum
 
 These are maintainer checks, not a recruited reader study:
 
-- Add Claude's HTML, verify its actions match [the contract](INTERFACE.md), and check keyboard/navigation, small windows, text rendering, and error states.
+- Recheck the included HTML against [the contract](INTERFACE.md) inside the actual Google dialog, including keyboard navigation, small windows, text rendering, and error states.
 - Run setup in a real blank Google Sheet twice and confirm no data is reset.
 - Save/remove a test key through settings and verify it never appears in cells, exports, rendered HTML, or errors.
 - Make a permitted live request for each provider intended for release, inspect actual responses and usage, then verify draft acceptance and stale-draft rejection. An adapter passing a simulated test does not establish live model access or compatibility.
@@ -74,7 +75,7 @@ These are maintainer checks, not a recruited reader study:
 
 From the package root, run `node --test tests/*.test.mjs` and `node scripts/check-package.mjs`.
 
-The Apps Script tests execute the actual `.gs` files with simulated Google services. They verify record behavior and the outgoing request structure; they do not establish Google authorization, rendered Sheet formatting, live API compatibility, or Claude's interface behavior. See [the validation record](../docs/validation.md).
+The Apps Script tests execute the actual `.gs` files with simulated Google services. Additional HTML tests exercise source parsing, the nested-card rendering regression, retry handling, and demo parity with the core forecast/provider catalog. Local browser checks cover the actual HTML demonstration. These do not establish Google authorization, rendered Sheet formatting, live API compatibility, or complete behavior inside Google's dialog. See [the validation record](../docs/validation.md).
 
 ## Technical references
 

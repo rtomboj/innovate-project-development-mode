@@ -1,6 +1,6 @@
 {
   "name": "tomboj-make-the-case",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "type": "module",
   "description": "A reader-owned Google Sheets coaching kit and browser demonstration for developing a credible work-improvement case.",

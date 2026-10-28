@@ -306,3 +306,11 @@ test('manual model IDs allow supported provider formats and block foreign paths'
   }
   assert.equal(h.call('saveSettings', { provider: 'openrouter', model: 'vendor/custom-model:free', maxCallsPerDay: 20 }).ok, true);
 });
+test('reopened history labels failed or unanswered messages instead of implying a completed exchange', () => {
+  const h = ready(); h.configure(); const i = h.create(); h.state.responses.push(new Error('Network unavailable'));
+  h.call('chat', { ideaId: i.id, message: 'A failed attempt', requestId: 'history-failed-request' });
+  let messages = harness(h.state).boot().ideas[0].messages;
+  assert.equal(messages[0].status, 'failed'); assert.equal(messages[0].requestId, 'history-failed-request');
+  h.sandbox.mtcHistory_(i.id, 'request', 'history-unanswered-request', 'Interrupted request', {}, new Date().toISOString());
+  messages = harness(h.state).boot().ideas[0].messages; assert.equal(messages.at(-1).status, 'unanswered');
+});

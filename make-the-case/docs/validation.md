@@ -1,16 +1,20 @@
 # Validation record
 
-October 28, 2026. Sheets backend kit 0.3.0 and browser demonstration 0.1.
+October 28, 2026. Sheets kit 0.3.1 and earlier browser demonstration 0.1.
 
 ## Sheets backend checks
 
-The actual `Core.gs`, `Providers.gs`, and `Code.gs` files run in a Node sandbox with simulated Google Sheets, Properties, Lock, UUID, and URL Fetch services. All 33 Apps Script tests pass, in addition to the original 16 browser-model tests (49 total).
+The actual `Core.gs`, `Providers.gs`, and `Code.gs` files run in a Node sandbox with simulated Google Sheets, Properties, Lock, UUID, and URL Fetch services. All 34 Apps Script tests pass, plus seven Coach HTML tests and 16 earlier browser-model tests (57 total).
 
 The new tests cover repeatable setup, conflicting headers, unknown versus zero inputs, changing review/support burden, complete financial cost arithmetic, invalid metric/field rejection, Testing permission references, stale writes, persistence of 17 ideas and context across a fresh script runtime, credential exclusion from bootstrap/export/URLs, draft review and acceptance, protected model fields, malformed model data, request deduplication, failed/truncated/network responses, daily attempt limits and reported tokens, relevant prompt context, draft invalidation, literal spreadsheet text, case/history deletion, history capacity, oversized audit data, file load order, busy workspaces, and model-path validation.
 
 The provider tests exercise all five outgoing request formats and normalize representative replies into the same reviewed draft. They also check a neutral initial provider state, isolated keys and remembered models, legacy Gemini access, refusal/truncation handling, a daily limit across provider switches, inactive-key redaction, metadata-only catalog lookup, and manual model-ID validation. Sources for request formats and suggested IDs are listed in the Apps Script guide. These are code/simulated-response checks, not successful live calls. No real key or company data was used.
 
-Claude is designing `Coach.html` separately at Rachel's request. A settings screenshot was supplied, but the actual UI file is not in this backend handoff. A real Google Sheet, authorization flow, actual requests for the release providers/models, saved-key handling under Google execution identities, native formatting, and integrated HTML behavior remain to be checked. Reader setup instructions retain those checks before newsletter release. No external user recruitment is required.
+Rachel supplied Claude's actual Coach.html in the implementation-notes ZIP. It is integrated in apps-script/. Local review found a nested-child rendering defect that hid action controls; the DOM helper was corrected and regression-tested. Other tests verify incomplete-reply retry state, retained text after a server failure, same-ID retrieval at a daily cap, preventing uncertain retries switching services/models, a dependency-free script, demo/provider catalog parity, and forecast parity with Core.gs. Failed and unanswered history messages now have explicit metadata and UI labels.
+
+Local browser checks verified draft acceptance, all five provider/model choices, disabled key/catalog controls in demonstration mode, case-panel display, numeric editing that changes 4.4 to -5.2 forecast hours/month, and scripted chat. This is a standalone demonstration with no real API calls. A real Google Sheet, authorization flow, provider requests, saved-key handling under Google execution identities, native formatting, downloads inside Google's dialog, and real model-catalog refresh remain to be checked. No external user recruitment is required.
+
+Additional browser checks confirmed that creating another idea preserves the existing collection, the next case opens with the conversational introduction, and recording Testing without permission references is blocked. The narrow header was corrected after an observed overflow. At a measured 380 CSS-pixel viewport, document width is also 380; the title, save state, More menu, and case toggle remain visible. A wider observed viewport measured 1222 pixels without horizontal document overflow. The available viewport override did not map exactly to its requested dimensions, so precise 1100 × 750 Google-dialog coverage is not claimed. No browser console errors were captured during these checks.
 
 The .gs code is a bound-dialog application, not a public web app or an enterprise multi-tenant service. It retrieves recent messages and accepted structured records as memory. It does not train a model. Export is a record download, not an import/restore feature. Sheets writes are not transactional; failure recovery requires checking saved records and refreshing derived views.
 
