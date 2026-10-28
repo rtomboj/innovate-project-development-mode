@@ -1,4 +1,4 @@
-# /innovate — Project Development Mode for Claude
+# /innovate — Project Development Mode for LLM
 
 A structured project development methodology for Claude, created by Rachel Wilde / Tomboj.
 
