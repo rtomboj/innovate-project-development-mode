@@ -2,6 +2,10 @@
 
 October 28, 2026. Sheets kit 0.5.0 and earlier browser demonstration 0.1.
 
+## GitHub and newsletter handoff
+
+The module now has a reader-first README, Start here guide, current Coach screenshot, downloadable ZIP with SHA256SUMS, and a maintainer finish-and-publish checklist. The package metadata matches 0.5.0. Both the newsletter article and launch post have been rewritten as a continuation of the Dana teaser. They are unpublished drafts; use docs/newsletter-publishing-notes.md for the reader link and sequence. PR #1 remains a draft for Rachel to review and finish. No merge, formal release, public Google template, or newsletter publication is claimed. The inspected GitHub head reported no checks or commit statuses; automated checks described here were run locally.
+
 ## Approved dialogue release: 0.5.0
 
 Rachel approved the redesigned web direction and requested the update scripts. The actual Sheets Coach now integrates the dialogue layout with the existing provider gateway, settings, request deduplication, error handling, calculations, and saved-case editing. It has a stable app header, selected-idea context inside the conversation, a top New idea button, a reply box immediately under the current work, one editable suggested note at a time, a compact read-only progress panel, and on-demand full-case views. Ideas is a Kanban board with explicit recorded outcomes. Empty/unchanged model template slots are filtered from review; AI blanks cannot wipe saved values.

@@ -5,5 +5,6 @@ node_modules/
 .openai/.git-credentials*
 *.tar.gz
 *.zip
+!downloads/make-the-case-google-sheets-v0.5.0.zip
 test-results/
 playwright-report/

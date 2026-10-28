@@ -1,55 +1,68 @@
-# Automation Thursday: Your team wants AI results. Where do you start?
+# Told to “use AI”? Make the case for one idea.
 
-You can see something that should work better.
+Yesterday, I wrote about Dana: a smaller team, more work, and a manager asking how she was using AI.
 
-Maybe it's a report that takes too long, a handoff that keeps breaking, or the same customer question landing in three different inboxes.
+Her answer was “a little.”
 
-You might already have seventeen ideas. Or you might be staring at the request to “find an AI use case,” wondering what would actually help.
+She already had ideas. She knew where refunds sat waiting for approval. She knew which report nobody read. She also knew that proposing a change could invite an uncomfortable question: what happens to her job if the work takes less time?
 
-This week's exercise is about turning what you know about the work into a plan someone can act on.
+Today’s Automation Thursday gives her—and you—a place to start.
 
-## Make the case
+I’ve been building **Make the Case**, a reusable tool that helps you collect your ideas, develop one, and prepare a specific request someone can evaluate. It runs in your own Google Sheet, with a conversation interface and your own AI key.
 
-I've built **Make the Case**, a reusable kit for a personal AI coach that runs from your own Google Sheet with your own AI access.
+You bring what you know about the work. The coach helps you explain the problem, find the missing information, consider the people involved, and work toward a credible next step. You do not have to be the person who builds the solution.
 
-It helps you:
+**Start by keeping your ideas.**
 
-1. Keep your ideas and choose one to develop.
-2. Describe the problem, scope a useful next step, and find the evidence and people it needs.
-3. Prepare a credible request and keep a record of your contribution as the work progresses.
+When you have several, choosing one should not mean losing the rest. Make the Case gives each idea a card. The board moves through Collect, Develop, and Advance, with a place to record decisions—including backlogged ideas you may return to.
 
-You do not need to be the person who builds the solution. Identifying the right problem, explaining the workflow, gathering evidence, and bringing people together are contributions too.
+Pick a problem you can describe from experience. Something that repeats. Something whose consequences you can observe. A rough title and a few sentences are enough to begin.
 
-## Try changing the assumption
+**Then build the case through a conversation.**
 
-The kit includes a fictional client-services example. A coordinator wants to improve weekly account updates.
+The next question appears with a reply box directly underneath. Each answer adds context. Suggested notes stay editable until you choose to save them. The case takes shape alongside the dialogue, and you can return to an earlier topic without starting over.
 
-The working estimate releases 4.4 hours a month after checking, correction, and support. Increase the checking time and that apparent improvement disappears.
+The useful questions go beyond “Could AI do this?”
 
-That is a useful result. It tells you what needs to change in the approach—or what you need to investigate before asking for a larger commitment.
+- What would improving the work help the company or its customers achieve?
+- What happens today, and where does it get stuck?
+- What evidence do you have? What is still an estimate or unknown?
+- Who would use, review, support, and approve a change?
+- What would it cost—including checking, correction, setup, and ongoing support?
+- What is the smallest useful next step?
 
-The forecast stays separate from achieved savings. Permissions, human responsibilities, quality, and support remain part of the case.
+For a worked example, take the refund queue in Dana’s story.
 
-## Bring your own work
+Her observation is that refunds over $50 can wait two days for a sign-off that is usually yes. That is a starting observation to investigate. It does not establish the volume, the exceptions, the staff effort, or whether the approval rule should change.
 
-Start with a recurring difficulty, one idea, several ideas, or an existing proposal. Open the coach and describe the work in your own words. Each question builds from the saved context and the case you are developing. Useful AI suggestions appear for review before they become part of your records.
+Two days of waiting is also different from two days of someone’s time. Keeping those measures separate makes the case more credible.
 
-Keep the ideas you do not choose. Save the evidence and feedback. Return to the next opportunity without starting from a blank page.
+An illustrative request could be:
 
-The Sheet retains your ideas, evidence, feedback, and decisions so you can return to the case. It also keeps a contribution record: what you investigated, coordinated, checked, or helped deliver, with shared credit and supporting evidence.
+> Could I spend two weeks investigating one refund queue with a Finance reviewer? I’ll measure the volume, approval wait, review effort, exceptions, and follow-up work, then bring back a recommendation. Any live change would need separate approval.
 
-The kit supplies the Apps Script files, setup instructions, and a customization prompt. Choose Gemini, Claude, OpenAI, OpenRouter, or Kimi, with a suggested or custom model and your own key for that service. Set a request limit. AI requests send the relevant case context to the selected service, so use information you are permitted to share. Saved memory helps you resume; it does not automatically train the underlying model.
+That gives someone a specific decision to consider. It also leaves room to discover whether AI, a clearer rule, or a better handoff would help.
 
-## What I'm exploring
+If you do not know a number, record “unknown” and how you could find it. A forecast belongs alongside its assumptions. Actual results come later, with their source and the people who helped confirm them.
 
-This is one practical piece of a bigger question: how do companies turn employee insight and leadership priorities into supported, governed work that delivers value?
+**Keep a record of your contribution.**
 
-I'm publishing the exercise to learn what helps, where people get stuck, and which parts of that larger problem deserve attention next.
+Identifying the problem, documenting the workflow, gathering evidence, involving a reviewer, and coordinating a useful investigation are contributions. Record what you did, who worked with you, and what evidence supports the result.
 
-**Where does an improvement idea tend to stall in your organization: scoping it, proving the value, finding an owner, getting approval, or making the change stick?**
+As the work progresses, that gives you material for a manager conversation or performance review. Shared credit matters. A proposed benefit and a measured outcome should remain clearly distinguishable.
 
-Try it with information you are permitted to use. Tell me what helped or what was missing through the usual comments or message route. I'd welcome a conversation about how your team handles this.
+The tool cannot promise job security or how an employer will respond. It can help you make your reasoning and contribution easier to explain.
 
----
+**Try Make the Case.**
 
-Publication note: add final reader-accessible kit and template links after Claude's `Coach.html` is integrated and the Google-account checks pass. The backend handoff is not yet a finished reader template. The current private hosted site is the earlier demonstration and is not the newsletter delivery. This file is a draft, not a published article.
+[Get the Google Sheets kit and starting guide on GitHub](https://github.com/rtomboj/innovate-project-development-mode/tree/main/make-the-case).
+
+This is an early-release kit for hands-on readers. You create your own Sheet and add the supplied Apps Script files; the guide walks through the setup. For AI conversation, choose Gemini, Claude, OpenAI/GPT, OpenRouter, or Kimi and supply your own API key. The source kit is free; provider usage may cost money. You can also collect ideas and edit case notes before connecting AI.
+
+Your records stay in your Sheet. When you send a message, relevant case context goes to your selected AI service. Use tools and information your organization permits. Start with fictional information while you learn the flow.
+
+This is one practical piece of how I think about AI adoption: organizational change that needs both employee insight and leadership direction. People need a way to bring ideas forward. Leaders need clear priorities, boundaries, ownership, and a way to evaluate the work.
+
+Automation Thursday is where I’m testing whether this first piece helps.
+
+**Where would your first idea get stuck: the evidence, the owner, or the decision?**

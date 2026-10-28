@@ -1,73 +1,58 @@
 # Make the Case
 
-**Your team wants AI results. Turn what you know about the work into a plan someone can act on.**
+**Turn what you know about the work into a proposal someone can evaluate.**
 
-Make the Case helps you develop an improvement, find the evidence and collaborators it needs, and keep a record of what you contribute. Start with a frustration, one idea, several ideas, or a proposal that has stalled. You do not need to be able to build the solution yourself.
+Collect your ideas, develop one through a conversation, and prepare a specific next-step request. Keep the evidence, decisions, and your contribution as the work progresses. You do not have to build the solution yourself.
 
-**[Google Sheets newsletter kit](apps-script/README.md)** · **[Claude HTML design prompt](apps-script/CLAUDE-DESIGN-PROMPT.md)** · **[See the fictional example](docs/northstar-example.md)** · **[Read the method](skills/make-the-case/SKILL.md)**
+**[Download the Google Sheets kit — v0.5.0](downloads/make-the-case-google-sheets-v0.5.0.zip)** · **[Start here](START-HERE.md)** · **[Update an existing copy](apps-script/UPDATE-AND-TEST.md)**
 
-The newsletter direction is a **reader-owned Google Sheet with an Apps Script conversation interface and the reader's own AI key**. Version 0.5.0 adds the approved dialogue layout, inline single-note review, a compact progress panel, Kanban outcomes, a top New idea action, and a Start Here launcher to Claude's integrated [Coach.html](apps-script/Coach.html), with Gemini, Claude, OpenAI, OpenRouter, and Kimi adapters, keys, models, and suggestions. Local tests and browser demonstration checks pass; live Google-account/provider verification remains pending. The screenshot and hosted preview below show the earlier demonstration.
+This is an early-release, reader-owned kit. It uses your Google Sheet, its bound Apps Script, and your own permitted AI key. Setup requires pasting the supplied files; there is no one-click Google template or Tomboj-hosted account. See [release status and verification](STATUS.md).
 
-![Checked fictional Northstar workspace](docs/images/workspace-desktop.jpg)
+![Make the Case: actual Coach file showing dialogue, progress, and the top New idea button](docs/images/coach-dialogue-v0.5.0.png)
 
-*Local browser capture of the fictional example. The interface is interactive; the underlying figures are assumptions rather than measured business results.*
+*Actual built Coach.html in its clearly labeled fictional demonstration. No AI call or Google Sheet write occurred in this capture.*
 
-## Three parts
+## What you do
 
-| Part | What you do | What you keep |
-|---|---|---|
-| Collect | Describe the work and preserve your opportunities | Context and an idea collection, including ideas you defer |
-| Develop | Scope one case, gather evidence, examine costs, map people and permissions | A defensible plan and a clear next-decision request |
-| Advance | Capture feedback, decisions, learning, and eventual results | A contribution record and a way to resume the next idea |
+| Part | What happens | What you keep |
+| --- | --- | --- |
+| Collect | Describe the work and retain your opportunities | Context and an idea collection, including ideas you defer |
+| Develop | Scope one case, examine evidence and costs, involve people and identify permissions | Working notes, explicit unknowns, and a bounded plan |
+| Advance | Prepare the next request, record feedback and decisions, and capture later results | A pitch and a contribution record with sources and shared credit |
 
-## Use the newsletter kit
+The reply box follows the current question. AI-proposed notes stay editable until saved. A compact progress panel shows what is building; My case opens the full case, numbers, pitch, and contribution/results record. Ideas opens a Kanban board with Collect, Develop, Advance, and Decisions. Recorded outcomes include Awaiting decision, Approved, Backlogged, and Not pursuing. Completing a pitch never approves implementation.
 
-The [Apps Script edition](apps-script/README.md) creates the tracker, case records, evidence/cost view, context, and history in a reader's own Sheet. It includes server-side provider adapters, user-specific key settings, reviewed AI drafts, persistent records, pitch output, usage limits, and export. Setup is designed for a bound dialog without a separate website deployment. Read [the exact handoff status](STATUS.md) before using or distributing it. An existing Claude interface can use [the provider-settings update prompt](apps-script/CLAUDE-PROVIDER-UPDATE.md).
+## Get started
 
-## Earlier ways to explore the method
+Download the kit and follow [Start here](START-HERE.md). Create a blank Sheet, add Code.gs, Core.gs, Providers.gs, Coach.html and the manifest to its bound Apps Script project, then run setupWorkspace. Reopen from Start Here → Open coach or the Make the Case menu. No web-app deployment is needed.
 
-**Use an AI assistant.** Supply the [complete skill folder](skills/make-the-case/) and your context to an assistant your organization permits. Follow the starting guide. It asks focused questions, challenges assumptions, and helps you develop the case. The method is written to be assistant-neutral; cross-provider behavioral testing has not been completed.
+For AI conversation, open More → Settings and choose Gemini, Claude, OpenAI/GPT, OpenRouter, or Kimi with your own key. Provider usage may cost money. You can create ideas and edit case records without connecting AI. A daily request limit controls message attempts, not exact spending.
 
-**Use the browser workspace.** The `dist/` folder contains a working, dependency-free web interface. It keeps multiple ideas, computes scenario economics, highlights missing evidence and permissions, creates a pitch, records decisions, and exports/restores a JSON workspace. Its **Prepare AI briefing** control carries your current work into your chosen assistant. The workspace itself does not call an AI model. It does not upload your records or call company systems.
+Your records live in your Google Sheet. Sending an AI message shares relevant saved case context with your selected service; OpenRouter routes it to a model host. Use tools and information your organization permits. The [full setup guide](apps-script/README.md) explains ownership, data sharing, costs, limits, and recovery.
 
-Start with the fictional Northstar example, then choose **Start my own**. Download the workspace file to retain a portable copy; browser storage is not a backup. See [the data contract](skills/make-the-case/references/records-and-measurement.md).
+## What makes a case useful
 
-## What makes the output useful
+- A business or customer outcome and a specific decision to request.
+- Evidence with sources, visible assumptions, and unknowns that remain unknown.
+- People who use, review, approve, support, or are affected by the change.
+- Checking, correction, setup and support included in the economics.
+- Forecasts separated from actual results, and capacity separated from cash savings.
+- A fair record of discovery, domain knowledge, coordination, delivery and adoption.
 
-- A specific decision to request, sized to the available evidence and authority.
-- Human responsibilities, affected audiences, learning, support, and collaborators.
-- Source-linked facts and visible unknowns; forecasts stay separate from actual results.
-- Calculations that include checking, correction, coverage, uptake, and ongoing support.
-- Fair credit for discovery, domain expertise, coordination, review, delivery, and adoption.
-- All the other ideas retained for later, with reasons and next steps.
+An improved proposal can be useful before implementation. It does not grant approval, establish savings, or guarantee recognition or job security.
 
-An improved proposal can be useful before implementation. It does not grant approval, establish financial savings, or guarantee recognition or job security.
+## Maintainer and publication status
 
-## For leaders
+64 automated checks and documented local browser checks pass. Final live Google-account verification remains a maintainer task; no independently verified cross-provider deployment is claimed. Read [validation](docs/validation.md) for the evidence and limits. The [finish-and-publish handoff](docs/maintainer-handoff.md) identifies the remaining installed-Sheet pass, GitHub review/merge, and newsletter steps.
 
-The reader exercise is one practical part of a larger question: how do employee insight and company priorities become supported, governed work with measurable outcomes? [The portfolio case study](docs/portfolio-case-study.md) explains the design choices and the relationship to AI change management.
+The newsletter itself is the public experiment. A separately recruited reader study is not a release prerequisite. The [article draft](docs/newsletter-draft.md) and [launch post draft](docs/launch-post-draft.md) are unpublished writing materials.
 
-## Run the workspace locally
+## Method, example, and source
 
-Prepare the downloadable starter, then serve `dist/` through any static web server. For example, with Python installed:
+The kit is one piece of a larger AI change-management question: how employee insight and company priorities become supported, governed work with measurable outcomes. See [the portfolio case study](docs/portfolio-case-study.md), [research context](docs/research.md), and the [fictional Northstar example](docs/northstar-example.md).
 
-```sh
-python scripts/package_release.py
-python -m http.server 8766 --directory dist
-```
+The assistant-neutral [method folder](skills/make-the-case/) and earlier [browser workspace](dist/) remain available as other ways to explore. The earlier browser demonstration does not call AI. The [design-only conversation preview](web-preview/README.md) records the approved direction; install the built Coach.html from apps-script/, rather than that prototype.
 
-Open `http://localhost:8766/`. There is no dependency installation or API key requirement. Opening `index.html` directly as a file may prevent browser module loading.
+For maintainers, run `node --test tests/*.test.mjs`, `node scripts/check-package.mjs`, and `python scripts/package_sheets.py`. The package script updates the ZIP in downloads/ and outputs/ and its SHA256SUMS file. Provider, case, calculation, revision, request, key-redaction, and draft/board behaviors have simulated tests; see validation before making broader claims.
 
-Maintainer checks use Node.js 18 or newer:
-
-```sh
-node --test tests/*.test.mjs
-python scripts/package_release.py
-node scripts/check-package.mjs
-```
-
-## Status and evidence
-
-Version 0.1 is the earlier browser demonstration. Version 0.5.0 includes the conversational Sheets interface and five provider adapters, checked locally with live Google/account/provider checks pending. Northstar people, records, and outcomes are fictional. See [validation](docs/validation.md) for actual checks and limitations, [research](docs/research.md) for the desk-research basis, and [release status](STATUS.md) for delivery details. The newsletter itself is the public experiment; a separately recruited reader test is not a prerequisite.
-
-Created by Rachel Wilde / Tomboj. Original code and written materials are licensed under [MIT](LICENSE), except linked third-party sources and brand identifiers. [Attribution](ATTRIBUTIONS.md) explains provenance.
+Created by Rachel Wilde / Tomboj. Original code and written materials in this module use the [MIT license](LICENSE), except third-party sources and brand identifiers. [Attribution](ATTRIBUTIONS.md) explains provenance. The repository’s pre-existing methodology has not been relicensed or replaced.
