@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Make the Case · TOMBOJ</title>
+<style>
+:root{
+  --tb-page:#0b0c0e;--tb-panel:#121418;--tb-sunken:#1b1e22;--tb-surface:#262a31;--tb-raised:#2d323a;
+  --tb-border:#3d434b;--tb-divider:#383d45;--tb-panel-border:#22262b;--tb-dot:#1d2024;
+  --tb-ink:#eceef0;--tb-soft:#b4b9c0;--tb-muted:#9ba1a9;
+  --tb-ai:#bba5ee;--tb-human:#8db4f0;--tb-decision:#e5bf6e;--tb-motion:#6fd0e2;--tb-done:#7dcf9e;--tb-safety:#f09d92;
+  --sans:Geist,"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --mono:"Geist Mono",ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+  --shadow:inset 0 1px 0 rgba(255,255,255,.05),0 1px 2px rgba(0,0,0,.35);
+  --shadow-card:inset 0 1px 0 rgba(255,255,255,.07),0 8px 20px rgba(0,0,0,.45);--glow-ai:0 0 22px rgba(187,165,238,.16);
+}
+@supports (color:oklch(0 0 0)){:root{
+  --tb-ai:oklch(.78 .11 300);--tb-human:oklch(.78 .11 250);--tb-decision:oklch(.8 .11 80);
+  --tb-motion:oklch(.82 .1 210);--tb-done:oklch(.78 .11 155);--tb-safety:oklch(.78 .11 25);--glow-ai:0 0 22px oklch(.78 .11 300 / .16);
+}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--tb-page);color:var(--tb-ink);font:15px/1.55 var(--sans);-webkit-font-smoothing:antialiased;overflow:hidden}
+a{color:var(--tb-human)}a:hover{color:var(--tb-ink)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--tb-human);outline-offset:2px;border-radius:6px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.mono{font-family:var(--mono)}
+
+.app{display:grid;grid-template-rows:auto auto minmax(0,1fr);height:100vh}
+header.top{display:flex;align-items:center;gap:14px;padding:0 16px;height:54px;background:var(--tb-panel);border-bottom:1px solid var(--tb-panel-border);min-width:0}
+.brand{display:flex;align-items:baseline;gap:10px;white-space:nowrap}
+.wordmark{font-family:var(--mono);font-weight:600;font-size:13px;letter-spacing:.34em;color:var(--tb-ink)}
+.series{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--tb-muted)}
+.focus{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding-left:14px;border-left:1px solid var(--tb-divider)}
+.focus .t{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tools{display:flex;align-items:center;gap:6px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:6px 12px;border-radius:8px;border:1px solid var(--tb-border);background:var(--tb-surface);color:var(--tb-ink);font-size:13.5px;font-weight:500;cursor:pointer;box-shadow:var(--shadow);white-space:nowrap}
+.btn:hover:not(:disabled){background:var(--tb-raised)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.ghost{background:transparent;box-shadow:none;border-color:transparent;color:var(--tb-soft)}
+.btn.ghost:hover:not(:disabled){background:var(--tb-surface);color:var(--tb-ink)}
+.btn.primary{background:var(--tb-human);border-color:var(--tb-human);color:#0b0c0e;font-weight:600}
+.btn.primary:hover:not(:disabled){background:var(--tb-ink);border-color:var(--tb-ink)}
+.btn.ai{background:var(--tb-ai);border-color:var(--tb-ai);color:#0b0c0e;font-weight:600}
+.btn.ai:hover:not(:disabled){background:var(--tb-ink);border-color:var(--tb-ink)}
+.btn.danger{border-color:color-mix(in srgb,var(--tb-safety) 60%,transparent);color:var(--tb-safety);background:transparent}
+.btn.sm{min-height:28px;padding:3px 9px;font-size:12.5px}
+.btn[aria-pressed="true"]{background:var(--tb-raised);border-color:var(--tb-soft)}
+
+.chip{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:6px;border:1px solid var(--tb-border);background:var(--tb-sunken);font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--tb-soft);white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+.c-ai{color:var(--tb-ai)}.c-human{color:var(--tb-human)}.c-decision{color:var(--tb-decision)}.c-motion{color:var(--tb-motion)}.c-done{color:var(--tb-done)}.c-safety{color:var(--tb-safety)}.c-muted{color:var(--tb-muted)}
+.chip.c-ai,.chip.c-human,.chip.c-decision,.chip.c-motion,.chip.c-done,.chip.c-safety{border-color:color-mix(in srgb,currentColor 45%,transparent)}
+.pulse{animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+.demo-banner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 16px;background:var(--tb-sunken);border-bottom:1px dashed #4a5058;font-size:13px;color:var(--tb-soft)}
+.demo-banner b{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--tb-ink)}
+
+.main{display:grid;grid-template-columns:236px minmax(0,1fr) 356px;min-height:0;position:relative}
+.main.no-panel{grid-template-columns:236px minmax(0,1fr)}
+.main.no-panel .panel{display:none}
+
+/* rail */
+.rail{background:var(--tb-panel);border-right:1px solid var(--tb-panel-border);display:flex;flex-direction:column;min-height:0}
+.rail-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 14px 10px}
+.label{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--tb-muted)}
+.rail ul{list-style:none;margin:0;padding:0 8px 12px;overflow:auto;display:flex;flex-direction:column;gap:4px}
+.idea{width:100%;text-align:left;display:flex;flex-direction:column;gap:3px;padding:9px 10px;border-radius:8px;border:1px solid transparent;background:transparent;cursor:pointer}
+.idea:hover:not(:disabled){background:var(--tb-sunken);border-color:var(--tb-panel-border)}
+.idea[aria-current="true"]{background:var(--tb-surface);border-color:var(--tb-border);box-shadow:var(--shadow)}
+.idea:disabled{cursor:not-allowed}
+.idea .n{font-size:14px;font-weight:500;line-height:1.35;color:var(--tb-ink);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.idea .m{font-family:var(--mono);font-size:11px;color:var(--tb-muted);display:flex;gap:8px;flex-wrap:wrap}
+.idea .m .f{color:var(--tb-human)}
+.rail-foot{margin-top:auto;padding:10px 14px 14px;border-top:1px solid var(--tb-panel-border);font-size:12.5px;color:var(--tb-muted);line-height:1.45}
+
+/* conversation */
+.center{display:flex;flex-direction:column;min-height:0;background-color:var(--tb-page);background-image:radial-gradient(var(--tb-dot) 1px,transparent 1.2px);background-size:16px 16px}
+#log{flex:1;overflow:auto;padding:24px 22px 18px;scroll-behavior:smooth}
+.thread{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.card{border:1px solid var(--tb-border);border-radius:10px;background:var(--tb-surface);box-shadow:var(--shadow-card);overflow:hidden}
+.band{display:flex;align-items:center;gap:8px;min-height:32px;padding:7px 14px;border-bottom:1px solid var(--tb-divider);font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--tb-muted)}
+.band .k{font-weight:600}
+.band .sp{flex:1}
+.band time,.band .meta{letter-spacing:.02em;text-transform:none}
+.body{padding:14px}
+.msg .body{white-space:pre-wrap;overflow-wrap:anywhere;font-size:15.5px;line-height:1.62}
+.msg.user{align-self:flex-end;max-width:88%;background:var(--tb-sunken);border-color:color-mix(in srgb,var(--tb-human) 40%,var(--tb-border))}
+.msg.user .band .k{color:var(--tb-human)}
+.msg.coach .band .k{color:var(--tb-ai)}
+.msg.coach{max-width:100%}
+.opener{border-color:var(--tb-divider)}
+.opener .eb{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--tb-muted);margin:2px 0 10px}
+.opener h1{font-size:24px;line-height:1.22;margin:0 0 10px;font-weight:600;letter-spacing:-.02em;text-wrap:balance}
+.opener p{margin:0 0 14px;color:var(--tb-soft);font-size:15px}
+.starters{display:flex;flex-wrap:wrap;gap:8px}
+.note{font-size:13px;color:var(--tb-muted);text-align:center;padding:2px 8px}
+.pending{border-color:color-mix(in srgb,var(--tb-motion) 55%,transparent)}
+.pending .band .k{color:var(--tb-motion)}
+.pending.uncertain,.pending.failed{border-color:color-mix(in srgb,var(--tb-decision) 55%,transparent)}
+.pending.uncertain .band .k{color:var(--tb-decision)}
+.pending.failed .band .k{color:var(--tb-safety)}
+.pending .body p{margin:0 0 10px;color:var(--tb-soft);font-size:14px}
+.pending .quote{white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px;padding:10px 12px;border-radius:8px;background:var(--tb-sunken);border:1px solid var(--tb-panel-border);margin-bottom:10px;max-height:160px;overflow:auto}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* draft */
+.draft{border-color:color-mix(in srgb,var(--tb-ai) 60%,transparent);box-shadow:var(--shadow-card),var(--glow-ai)}
+.draft .band{background:color-mix(in srgb,var(--tb-ai) 9%,transparent);border-bottom-color:color-mix(in srgb,var(--tb-ai) 30%,transparent)}
+.draft .band .k{color:var(--tb-ai)}
+.draft .reason{margin:0 0 12px;font-size:14.5px;color:var(--tb-soft);white-space:pre-wrap}
+.change{border-top:1px solid var(--tb-divider);padding:10px 0}
+.change:first-of-type{border-top:0}
+.change .f{font-weight:600;font-size:14px;margin-bottom:6px}
+.pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.pair>div{padding:8px 10px;border-radius:8px;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}
+.pair .now{background:var(--tb-sunken);border:1px solid var(--tb-panel-border);color:var(--tb-soft)}
+.pair .new{background:color-mix(in srgb,var(--tb-ai) 8%,var(--tb-sunken));border:1px solid color-mix(in srgb,var(--tb-ai) 35%,transparent)}
+.pair .lbl{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--tb-muted);margin-bottom:3px}
+.pair .new .lbl{color:var(--tb-ai)}
+.empty{color:var(--tb-muted)}
+.fine{font-size:12.5px;color:var(--tb-muted);line-height:1.5;margin:10px 0 0}
+
+/* composer */
+.composer{border-top:1px solid var(--tb-panel-border);background:var(--tb-panel);padding:10px 18px 12px}
+.composer-in{max-width:680px;margin:0 auto}
+.notice{display:flex;gap:10px;align-items:flex-start;padding:8px 10px 8px 12px;margin-bottom:8px;border-radius:8px;border:1px solid var(--tb-border);background:var(--tb-sunken);font-size:13.5px;line-height:1.45}
+.notice .chip{flex:none;margin-top:1px}
+.notice .tx{flex:1;color:var(--tb-ink)}
+.box{border:1px solid var(--tb-border);border-radius:10px;background:var(--tb-sunken);box-shadow:var(--shadow)}
+.box:focus-within{border-color:var(--tb-human)}
+#msg{display:block;width:100%;min-height:62px;max-height:200px;resize:none;border:0;background:transparent;padding:11px 13px 6px;font-size:15.5px;line-height:1.55;outline:none}
+#msg::placeholder{color:#868c95}
+#msg[readonly]{color:var(--tb-soft)}
+.box-foot{display:flex;align-items:center;gap:6px;padding:4px 6px 6px 8px;flex-wrap:wrap}
+.quick{display:flex;gap:4px;flex-wrap:wrap;flex:1}
+.count{font-family:var(--mono);font-size:11px;color:var(--tb-muted);padding:0 6px}
+.count.over{color:var(--tb-safety)}
+.disclose{display:flex;gap:6px 12px;flex-wrap:wrap;justify-content:space-between;margin-top:7px;font-size:12px;color:var(--tb-muted)}
+.linkbtn{background:none;border:0;padding:0;color:var(--tb-soft);text-decoration:underline;text-underline-offset:2px;cursor:pointer;font-size:12px}
+.linkbtn:hover{color:var(--tb-ink)}
+
+/* panel */
+.panel{background:var(--tb-panel);border-left:1px solid var(--tb-panel-border);display:flex;flex-direction:column;min-height:0}
+.panel-head{padding:12px 14px 0}
+.panel-head .row{justify-content:space-between}
+.spine{display:flex;align-items:center;margin:12px 0 2px}
+.spine .st{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--tb-muted);flex:none}
+.spine .st i{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--tb-border);background:var(--tb-sunken);display:flex;align-items:center;justify-content:center;font-style:normal;font-size:10px;color:var(--tb-muted)}
+.spine .st.past i{border-color:var(--tb-soft);color:var(--tb-soft)}
+.spine .st.on{color:var(--tb-ink)}.spine .st.on i{border-color:var(--tb-ink);color:var(--tb-ink);background:var(--tb-surface)}
+.spine .ln{flex:1;height:1.5px;background:var(--tb-border);margin:0 8px;min-width:10px}
+.tabs{display:flex;gap:2px;padding:10px 10px 0;border-bottom:1px solid var(--tb-divider)}
+.tab{padding:7px 10px 8px;border:0;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;font-size:13.5px;color:var(--tb-muted);cursor:pointer;font-weight:500}
+.tab[aria-selected="true"]{color:var(--tb-ink);border-bottom-color:var(--tb-ink)}
+.tab:hover{color:var(--tb-ink)}
+.panel-body{flex:1;min-height:0;overflow:auto;padding:12px 12px 20px;background-image:radial-gradient(var(--tb-dot) 1px,transparent 1.2px);background-size:16px 16px;display:flex;flex-direction:column;gap:10px}
+.panel-body>.card{flex:0 0 auto}
+.panel-head,.tabs{flex-shrink:0}
+.edit-actions{position:sticky;top:0;z-index:2;background:var(--tb-surface);padding:10px 0;border-bottom:1px solid var(--tb-divider)}
+.composer-label{display:block;font-size:12px;color:var(--tb-soft);margin:0 0 5px}
+.resume{border-color:var(--tb-human)}
+.resume p{margin:0 0 10px}
+.suggestion-actions{margin-top:10px}
+.inline-review{margin-top:10px}
+.inline-review textarea{min-height:100px}
+.send-review{flex:1;min-height:0;overflow:auto;padding:18px}
+.send-review .card{max-width:720px;margin:0 auto}
+.send-review pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px}
+.sec{background:var(--tb-surface)}
+.sec .body{padding:8px 12px 12px;display:flex;flex-direction:column;gap:10px}
+.fld .fl{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--tb-muted);margin-bottom:2px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.fld .fv{font-size:14px;line-height:1.5;margin-top:2px;white-space:pre-wrap;overflow-wrap:anywhere}
+.fld .fv.empty{color:#7d838c;font-size:13px}
+.decision{border-color:color-mix(in srgb,var(--tb-decision) 55%,transparent)}
+.dia{width:9px;height:9px;transform:rotate(45deg);border:1.5px solid var(--tb-decision);display:inline-block;flex:none;margin:0 2px}
+.band .no{color:#7d838c;font-weight:400}
+.decision .band .k{color:var(--tb-decision)}
+.decision .big{font-size:15px;font-weight:600;margin-bottom:6px}
+.decision ul{margin:0;padding-left:18px;font-size:13.5px;color:var(--tb-soft);display:flex;flex-direction:column;gap:3px}
+.forecast .band .k{color:var(--tb-soft)}
+.kv{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;font-size:13.5px}
+.kv .v{font-family:var(--mono);font-size:13px;text-align:right}
+.kv .v.na{color:var(--tb-muted);font-family:var(--sans);font-size:12.5px}
+.kv .v.neg{color:var(--tb-decision)}
+.pitch{white-space:pre-wrap;overflow-wrap:anywhere;font-family:var(--mono);font-size:12.5px;line-height:1.6;color:var(--tb-soft);margin:0}
+.panel-empty{padding:18px 6px;color:var(--tb-muted);font-size:14px}
+
+/* forms */
+.form{display:flex;flex-direction:column;gap:12px}
+.form label,.lab{display:block;font-size:13px;color:var(--tb-soft);margin-bottom:4px;font-weight:500}
+.hint{font-size:12px;color:var(--tb-muted);margin-top:3px;line-height:1.4}
+.inp{width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--tb-border);background:var(--tb-page);font-size:14px;line-height:1.45}
+.inp:focus{border-color:var(--tb-human)}
+textarea.inp{resize:vertical;min-height:64px}
+select.inp{appearance:auto}
+.err{color:var(--tb-safety);font-size:13px}
+.fs{border:1px solid var(--tb-divider);border-radius:10px;padding:6px 12px 10px;margin:0}
+.fs legend{padding:0 4px;margin-left:-4px}
+.opt{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;align-items:start;padding:6px 0;border-top:1px solid var(--tb-panel-border)}
+.opt:first-of-type{border-top:0}
+.opt input[type=radio]{margin:4px 0 0;accent-color:var(--tb-human);width:16px;height:16px}
+.opt>label{margin:0;font-weight:400;color:var(--tb-ink);font-size:14px}
+.opt>.inp{grid-column:2}
+.opt .code{display:block;font-family:var(--mono);font-size:11.5px;color:var(--tb-muted)}
+details.adv summary{cursor:pointer;font-size:13px;color:var(--tb-soft)}
+details.adv[open] summary{margin-bottom:8px}
+
+/* dialog */
+dialog{border:1px solid var(--tb-border);border-radius:14px;background:var(--tb-panel);color:var(--tb-ink);padding:0;width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 40px);box-shadow:0 20px 60px rgba(0,0,0,.55)}
+dialog::backdrop{background:rgba(5,6,7,.72)}
+.dlg{display:flex;flex-direction:column;max-height:calc(100vh - 42px)}
+.dlg-h{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--tb-divider)}
+.dlg-h h2{margin:0;font-size:18px;font-weight:600;flex:1}
+.dlg-b{padding:16px 18px;overflow:auto;font-size:14.5px;line-height:1.55}
+.dlg-b p{margin:0 0 10px}
+.dlg-b ul{margin:0 0 10px;padding-left:20px}
+.dlg-f{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--tb-divider)}
+
+/* loading */
+.loading{display:flex;align-items:center;gap:10px;color:var(--tb-soft);font-size:14px;padding:30px 0;justify-content:center}
+
+.only-narrow{display:none}
+@media (max-width:1000px){
+  .main,.main.no-panel{grid-template-columns:236px minmax(0,1fr)}
+  .panel{position:absolute;top:0;right:0;bottom:0;width:min(380px,92vw);z-index:5;box-shadow:-12px 0 40px rgba(0,0,0,.5)}
+  .series{display:none}
+}
+@media (max-width:760px){
+  .main,.main.no-panel{grid-template-columns:minmax(0,1fr)}
+  .rail{position:absolute;top:0;left:0;bottom:0;width:min(290px,86vw);z-index:6;box-shadow:12px 0 40px rgba(0,0,0,.5);display:none}
+  .rail.open{display:flex}
+  .only-narrow{display:inline-flex}
+  .hide-narrow{display:none}
+  #log{padding:16px 12px}
+  .composer{padding:8px 10px 10px}
+  .pair{grid-template-columns:minmax(0,1fr)}
+  header.top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 8px;padding:8px 10px;height:auto;min-height:54px}
+  #railBtn{grid-column:1;grid-row:1}
+  .brand{grid-column:2;grid-row:1}
+  .tools{display:contents}
+  #moreBtn{grid-column:3;grid-row:1}
+  #panelBtn{grid-column:3;grid-row:2}
+  #saveChip{grid-column:1/-1;grid-row:3;min-width:0;overflow:hidden}
+  .focus{grid-column:1/3;grid-row:2;padding-left:0;border-left:0;min-width:0}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
+
+
+
+
+
+/* APPROVED_STYLE_START */
+
+:root{color-scheme:dark;--page:#101214;--panel:#171a1e;--surface:#20242a;--raised:#292e36;--line:#343a44;--ink:#edf0f4;--soft:#b6beca;--muted:#929eae;--blue:#98c7ff;--purple:#c7b8ef;--green:#9ad1b1;--amber:#e8c58a;--font:'Segoe UI',system-ui,sans-serif;--mono:ui-monospace,'Cascadia Mono',monospace}
+*{box-sizing:border-box} [hidden]{display:none!important}
+html,body{margin:0;height:100%;background:var(--page);color:var(--ink);font:15px/1.6 var(--font)}
+body{overflow:hidden}button,input,textarea{font:inherit;color:inherit}button{cursor:pointer}button:disabled{opacity:.4;cursor:default}button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--blue);outline-offset:4px}
+button{background:none;border:0}a{color:var(--blue)}
+.app{height:100dvh;display:grid;grid-template-rows:auto auto auto minmax(0,1fr);max-width:1600px;margin:auto}
+.top{display:flex;align-items:center;gap:18px;padding:13px 24px;border-bottom:1px solid var(--line);min-height:64px}
+.wordmark{font:700 12px var(--mono);letter-spacing:.3em;white-space:nowrap}.product{color:var(--soft);font-size:13px;margin-left:10px;letter-spacing:0;font-weight:400}.title{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:18px;border-left:1px solid var(--line)}
+.top-actions{display:flex;gap:8px;align-items:center}.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 13px;min-height:38px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-weight:500;background:var(--surface)}.btn:hover{background:var(--raised)}.btn.primary{background:var(--blue);border-color:var(--blue);color:#10151b;font-weight:650}.btn.primary:hover{background:#c3dfff}.btn.quiet{background:transparent;border-color:transparent;color:var(--soft)}.btn.quiet:hover{background:var(--surface);color:var(--ink)}.btn.small{padding:5px 10px;min-height:32px;font-size:12px}.text-link{color:var(--soft);font-size:13px;text-decoration:underline;text-underline-offset:4px;padding:4px 0}.text-link:hover{color:var(--ink)}
+.progress{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 24px;border-bottom:1px solid var(--line);background:var(--panel)}.stages{display:flex;align-items:center;gap:6px}.stage{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:7px;color:var(--muted);font-size:13px;border:1px solid transparent}.stage:hover{background:var(--surface)}.stage[aria-current="step"]{color:var(--ink);background:var(--surface);border-color:var(--line)}.stage-num{font:11px var(--mono);color:var(--muted)}.stage[aria-current="step"] .stage-num{color:var(--blue)}.stage-arrow{color:#556171;font-size:13px}.saved{font:11px var(--mono);color:var(--green);margin-right:10px}.progress-right{display:flex;align-items:center;gap:12px}
+.preview-note{font-size:11px;color:var(--muted);text-align:center;padding:5px 12px;border-bottom:1px solid #242a33}.preview-note strong{font-weight:500;color:var(--amber)}
+.workspace{min-height:0;display:flex;flex-direction:column}.scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-color:#4a535f transparent;scrollbar-width:thin}.flow{max-width:780px;margin:0 auto;padding:26px 28px 24px}.view-intro{color:var(--muted);font-size:12px;margin:0 0 22px}.earlier{margin-bottom:26px;border-bottom:1px solid #262c34;padding-bottom:16px}.earlier summary{cursor:pointer;color:var(--muted);font-size:12px}.earlier .turn{margin-top:22px}.turn{margin:0 0 28px;scroll-margin-top:22px}.speaker{font:11px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--purple);margin-bottom:9px;display:flex;align-items:center;gap:9px}.speaker:before{content:'';width:7px;height:7px;background:var(--purple);border-radius:50%}.turn p{margin:0 0 12px;white-space:pre-wrap;overflow-wrap:anywhere}.turn.user{margin-left:auto;max-width:88%;border:1px solid #343b46;border-radius:14px 14px 3px 14px;background:#242a32;padding:13px 17px}.turn.user .speaker{color:var(--muted);font-size:10px}.turn.user .speaker:before{display:none}.turn.user p{margin:0;font-size:14px}.topic-label{font:11px var(--mono);text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:12px 0 10px}.question{font-size:23px;font-weight:550;line-height:1.42;letter-spacing:-.025em;margin:7px 0 14px;max-width:680px}.context-line{font-size:14px;color:var(--soft);margin-bottom:16px!important}.inline-saved{display:inline-flex;gap:8px;align-items:center;font-size:12px;color:var(--green);padding:2px 0}.saved-dot{width:5px;height:5px;background:var(--green);border-radius:50%}.answer-ref{border-left:2px solid #435573;padding-left:14px;color:var(--soft);font-size:14px;white-space:pre-wrap;margin:10px 0 16px}.answer-ref-label{font-size:11px;display:block;color:var(--muted);margin-bottom:4px}
+.review{margin:16px 0 0;padding:17px 18px;border:1px solid #635d7f;border-radius:10px;background:#20212a}.review-head{display:flex;align-items:center;gap:8px;justify-content:space-between;margin-bottom:10px}.review-head label{font-size:13px;font-weight:550;color:var(--purple)}.review textarea{display:block;background:#14171c;border:1px solid #4f4b61;border-radius:7px;padding:11px 12px;width:100%;resize:vertical;min-height:92px;max-height:220px;font-size:15px;line-height:1.55}.review .actions{margin-top:13px}.fine{font-size:12px;color:var(--muted);line-height:1.5}.review .fine{margin:10px 0 0}.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.answer-help{color:var(--soft);font-size:13px;margin-top:12px!important}.example-badge{font:10px var(--mono);color:var(--amber)}
+.composer{flex:none;background:linear-gradient(0deg,var(--page) 80%,transparent);padding:6px 24px 12px}.composer-inner{max-width:724px;margin:0 auto}.input-shell{background:#1c2026;border:1px solid #46505f;border-radius:13px;padding:9px 11px 8px;box-shadow:0 4px 20px #0002}.input-shell:focus-within{border-color:var(--blue)}.input-label{font-size:11px;color:var(--muted);padding:0 3px 4px;display:block}.input-shell textarea{display:block;width:100%;border:0;outline:none;background:transparent;resize:none;min-height:38px;max-height:116px;padding:4px 3px 6px;font-size:15px;line-height:1.5;overflow:auto}.input-shell textarea:focus-visible{outline:none}.input-shell textarea::placeholder{color:#98a4b5}.input-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px}.input-help{display:flex;gap:5px;flex-wrap:wrap}.input-help button{font-size:12px;padding:4px 7px;color:var(--soft);border-radius:6px}.input-help button:hover{background:var(--raised)}.composer-foot{display:flex;justify-content:space-between;gap:8px;padding:6px 3px 0;color:var(--muted);font-size:10px}.send-icon{font-size:17px;line-height:1}.draft-status{color:var(--amber)}
+.page-head{margin-bottom:24px}.page-head h1{font-size:26px;line-height:1.3;font-weight:550;letter-spacing:-.03em;margin:16px 0 8px}.page-head p{color:var(--soft);font-size:14px;margin:0}.overview-tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:22px 0}.overview-tabs button{font-size:13px;padding:9px 14px;color:var(--muted);border-bottom:2px solid transparent}.overview-tabs button[aria-selected="true"]{color:var(--ink);border-color:var(--blue)}.case-item{padding:17px 0;border-bottom:1px solid #2b313a}.case-item h3{font-size:12px;color:var(--muted);font-weight:500;margin:0 0 5px}.case-item p{margin:0;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}.case-item .text-link{font-size:11px;margin-top:6px}.not-added{color:var(--muted);font-style:italic}.pitch{white-space:pre-wrap;font:14px/1.8 var(--font);overflow-wrap:anywhere;margin:20px 0}.topic-group{margin-bottom:24px}.topic-group h2{font-size:12px;text-transform:uppercase;color:var(--muted);letter-spacing:.1em;margin:0 0 8px}.topic-choice{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px 12px;border-radius:8px;border:1px solid transparent}.topic-choice:hover{background:var(--surface)}.topic-choice.current{border-color:#536783;background:#1c2633}.topic-choice .name{flex:1;font-size:14px}.topic-choice .status{font-size:11px;color:var(--muted)}.topic-choice .complete{color:var(--green)}.idea-card{border:1px solid var(--line);border-radius:10px;padding:17px 18px;width:100%;text-align:left;background:var(--panel);margin-bottom:12px}.idea-card:hover{background:var(--surface)}.idea-card strong{font-size:15px;display:block}.idea-card p{font-size:12px;color:var(--muted);margin:4px 0 0}.new-idea{border:1px solid var(--line);border-radius:10px;padding:18px;margin-top:16px}.new-idea label{display:block;font-size:13px;margin:0 0 8px}.new-idea input{width:100%;padding:10px;border:1px solid var(--line);border-radius:7px;background:var(--page);margin-bottom:14px}.notice{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);max-width:90vw;background:#27392f;color:#e5f5eb;border:1px solid #507a61;border-radius:9px;font-size:13px;padding:10px 16px;box-shadow:0 5px 25px #0006;z-index:20}.status-line{padding:10px 0;color:var(--green);font-size:12px}.permission-note{border-left:2px solid var(--amber);padding:0 0 0 12px;color:var(--soft);font-size:13px;margin:20px 0}.completion{border:1px solid #527664;background:#18271f;border-radius:10px;padding:19px;margin:18px 0}.completion h2{font-size:21px;margin:0 0 10px}.error{color:#f4b2ab;font-size:13px}
+@media(max-width:760px){.top{padding:10px 14px;min-height:58px;gap:10px;flex-wrap:wrap}.wordmark{font-size:11px}.product{display:none}.title{order:3;flex-basis:100%;padding:0;border:0;font-size:14px}.top-actions{margin-left:auto}.top-actions .btn{padding:6px 10px;min-height:32px;font-size:12px}.progress{padding:8px 12px;gap:5px;flex-wrap:wrap}.stage{padding:5px 8px;gap:6px;font-size:12px}.stage-num{font-size:10px}.stage-arrow{display:none}.progress-right{gap:4px}.saved{display:none}.progress .text-link{font-size:11px}.flow{padding:20px 20px 18px}.question{font-size:21px}.composer{padding:4px 12px 10px}.composer-foot{font-size:9px}.preview-note{font-size:10px;padding:4px 10px}.review{padding:14px}.turn.user{max-width:94%}.input-help button{font-size:11px;padding:4px}.input-label{font-size:10px}.btn{min-height:36px}}
+@media(max-height:640px){.top{padding-top:8px;padding-bottom:8px;min-height:48px}.progress{padding-top:5px;padding-bottom:5px}.flow{padding-top:18px}.composer{padding-bottom:6px}.input-shell{padding-top:5px;padding-bottom:5px}.composer-foot{padding-top:3px}.question{font-size:21px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+.flow>.composer{background:none;padding:0;margin:0 0 26px;flex:initial}
+.flow>.composer .composer-inner{max-width:none}
+.reviewing{display:flex;align-items:center;gap:10px;color:var(--purple);padding:15px 0;font-size:15px}
+.reviewing-dot{width:7px;height:7px;border-radius:50%;background:var(--purple);animation:review-pulse 1.1s ease-in-out infinite}
+@keyframes review-pulse{50%{opacity:.3}}
+@media(prefers-reduced-motion:reduce){.reviewing-dot{animation:none}}
+.conversation-layout.with-progress{display:grid;grid-template-columns:minmax(0,780px) 260px;align-items:start;gap:28px;max-width:1100px;margin:0 auto;padding:0 24px}
+.with-progress .flow{width:100%;min-width:0;margin:0;padding:26px 0 24px}
+.case-progress{margin:26px 0 24px;padding:19px 18px;background:var(--panel);border:1px solid var(--line);border-radius:11px;position:sticky;top:22px}
+.case-progress h2{font-size:14px;font-weight:550;margin:0 0 5px}.case-progress .count{color:var(--muted);font-size:12px;margin:0 0 12px}.case-progress progress{display:block;width:100%;height:5px;accent-color:var(--green);margin:0 0 16px;border:0;border-radius:6px;overflow:hidden}.case-progress progress::-webkit-progress-bar{background:#30363e}.case-progress progress::-webkit-progress-value{background:var(--green)}
+.stage-count{display:flex;align-items:center;justify-content:space-between;padding:7px 0;font-size:12px;color:var(--soft)}.stage-count.active{color:var(--blue)}.stage-count .total{font:11px var(--mono);color:var(--muted)}
+.saved-note{margin-top:15px;padding-top:13px;border-top:1px solid var(--line)}.saved-note h3{font-size:11px;font-weight:500;color:var(--muted);margin:0 0 5px}.saved-note p{font-size:12px;color:var(--soft);line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;margin:0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}.case-progress .text-link{font-size:12px;margin-top:16px}
+@media(max-width:980px){.conversation-layout.with-progress{display:block;padding:0;max-width:none}.with-progress .flow{max-width:780px;margin:0 auto;padding:22px 24px}.case-progress{display:none}}
+@media(max-width:760px){.with-progress .flow{padding:20px 20px 18px}}
+.conversation-layout.board-view{max-width:1440px;margin:auto}.board-view .flow{max-width:none;width:100%;padding:24px}
+.board-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px}.board-heading h1{font-size:26px;letter-spacing:-.025em;font-weight:550;margin:12px 0 5px}.board-heading p{font-size:13px;color:var(--soft);margin:0}.kanban-board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;align-items:start}
+.kanban-column{background:#171a1e;border:1px solid #2d333c;border-radius:12px;padding:13px 11px;min-width:0;min-height:290px}.kanban-column.drop-target{border-color:var(--blue);background:#1b2531}.column-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 2px 4px}.column-heading h2{font-size:13px;font-weight:600;margin:0}.column-heading .number{color:var(--muted);font:11px var(--mono)}.column-description{font-size:11px;color:var(--muted);margin:0 2px 16px}.column-collect{border-top:2px solid #779ccd}.column-develop{border-top:2px solid var(--purple)}.column-advance{border-top:2px solid var(--amber)}.column-decisions{border-top:2px solid var(--green)}
+.kanban-card{background:#22262d;border:1px solid #3a424e;border-radius:9px;padding:13px;margin:0 0 12px;cursor:grab}.kanban-card.current-card{border-color:#6986aa}.kanban-card:active{cursor:grabbing}.kanban-card.dragging{opacity:.45}.board-title{display:block;text-align:left;padding:0;width:100%;font-size:14px;font-weight:550;line-height:1.5;color:var(--ink);margin:7px 0}.board-title:hover{color:var(--blue)}.card-snippet{font-size:12px;color:var(--soft);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:7px 0 12px;overflow-wrap:anywhere}.card-meta{font-size:11px;color:var(--muted);display:flex;justify-content:space-between;gap:8px;margin-bottom:11px}.current-tag{font:10px var(--mono);color:var(--blue)}.decision-tag{display:inline-flex;border:1px solid #4f5866;padding:2px 7px;border-radius:5px;font-size:10px;color:var(--soft)}.decision-tag.approved{color:var(--green);border-color:#4f7460}.decision-tag.backlogged{color:var(--amber);border-color:#796344}.decision-tag.not-pursuing{color:#c3abb7;border-color:#6b515e}.card-move{display:flex;gap:7px;align-items:center;border-top:1px solid #363c46;padding-top:10px}.card-move label{font-size:10px;color:var(--muted);white-space:nowrap}.card-move select{min-width:0;flex:1;max-width:100%;font-size:11px;padding:5px;border-radius:5px;border:1px solid #434d5b;background:#1a1e24}.empty-column{padding:18px 8px;font-size:12px;color:var(--muted);border:1px dashed #363e49;border-radius:8px;text-align:center}.board-foot{font-size:11px;color:var(--muted);margin:18px 0}
+.board-create{margin:0 0 20px}.board-create .new-idea{margin:0;max-width:520px}.decision-form{background:#20252c;border:1px solid #637960;border-radius:10px;padding:18px;margin:0 0 22px;max-width:760px}.decision-form h2{font-size:17px;margin:0 0 6px}.decision-form p{font-size:12px;color:var(--soft);margin:0 0 14px}.decision-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}.decision-fields label{display:block;font-size:12px;color:var(--soft);margin-bottom:4px}.decision-fields input,.decision-fields select,.decision-fields textarea{display:block;width:100%;border:1px solid #485260;background:var(--page);border-radius:6px;padding:8px;font-size:13px}.decision-fields .wide{grid-column:1/-1}.decision-form .actions{margin-top:14px}.outcome-note{font-size:11px!important;color:var(--muted)!important;margin:9px 0 0!important}
+@media(max-width:1050px){.kanban-board{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.board-view .flow{padding:20px 16px}.kanban-board{grid-template-columns:1fr}.kanban-column{min-height:150px}.board-heading{align-items:flex-start;flex-direction:column;gap:12px}.decision-fields{grid-template-columns:1fr}}
+.working-idea{font-size:12px;color:var(--muted);padding:0 0 16px;margin-bottom:18px;border-bottom:1px solid #2b323c;line-height:1.5}.working-idea strong{font-weight:550;color:var(--soft);margin-left:5px}
+
+/* Compatibility rules for the existing, tested live gateway and editor. */
+#notice{flex-basis:100%;min-width:0}#notice:empty{display:none}
+header.top{display:flex!important;flex-wrap:wrap;height:auto;min-height:62px;padding:10px 20px}.brand .series{display:none}.focus{min-width:130px}.tools{display:flex!important;flex-wrap:wrap;gap:5px}#railBtn,#moreBtn{display:inline-flex!important}#ctxBtn,#setBtn,#expBtn{display:none}.app{grid-template-rows:auto auto auto minmax(0,1fr)}
+.main{display:grid!important;grid-template-columns:minmax(0,780px) 260px!important;align-items:start;gap:28px;max-width:1100px;margin:0 auto;width:100%;padding:0 24px;overflow:auto;min-height:0}
+.center{display:block;min-width:0;min-height:0;background:none}#log{overflow:visible;padding:26px 0;flex:initial}.thread{max-width:none;gap:0;display:block}.composer{padding:0!important;background:none;margin:28px 0 22px}.composer-in{max-width:none}#msg{font:15px/1.5 var(--font);min-height:44px;max-height:140px;padding:10px 12px 4px}.box{background:#1c2026}.box-foot{padding:7px}.composer-label{font:11px var(--font);color:var(--muted);padding:8px 12px 0;margin:0}.disclose{font-size:10px;gap:5px;line-height:1.5}.disclose .mono{font-size:9px}.coach-reply{font-size:19px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:20px}.active-dialogue .question{font-size:22px}.active-dialogue>.speaker{margin-bottom:13px}.earlier .card.msg{margin:15px 0}.speaker{font-size:11px}.review{margin-top:18px}.review .inp{background:#14171c}.review .actions{margin:6px 0}.case-progress{position:sticky;top:20px}.case-progress .text-link{display:block}
+.main.view-chat #rail,.main.view-chat #panel{display:none!important}.main.view-board,.main.view-case{display:block!important;max-width:1440px}.main.view-board .center,.main.view-case .center,.main.view-board #progressPanel,.main.view-case #progressPanel{display:none!important}.main.view-board #panel,.main.view-case #rail{display:none!important}
+.main.view-board #rail{display:block!important;position:static!important;width:auto!important;background:none;border:0;padding:24px 0;overflow:visible}.main.view-case #panel{display:block!important;position:static!important;width:auto!important;border:0;background:none;box-shadow:none;max-width:820px;margin:auto;padding:22px 0}.main.view-case #panel .spine{display:none}.panel-body{overflow:visible;flex:none;padding:16px 0;display:flex;flex-direction:column}.panel-body>.card{flex:none}.panel-head{padding:0}.panel-body .body{padding:14px}.panel-body .card{margin-bottom:12px}.panel-body .pitch{font:13px/1.7 var(--mono)}.edit-actions{z-index:1}.panel-head .label{font-size:14px}.panel-empty{padding:18px}
+.board-heading{margin-bottom:22px}.kanban-column h2{font-size:14px;margin:2px 0 18px}.column-count{float:right;font:11px var(--mono);color:var(--muted)}.kanban-card select{width:100%;background:#161a20;border:1px solid #45505e;padding:6px;border-radius:6px;font-size:12px;color:var(--soft)}.kanban-card{overflow-wrap:anywhere}.board-title{min-height:30px}.kanban-board{grid-template-columns:repeat(4,minmax(0,1fr))}.jump-link{margin-left:10px}.progress{gap:10px;flex-wrap:wrap}.progress #saveChip{font-size:10px}.send-review{padding:24px 0;overflow:visible}.send-review>.card{max-width:none}
+@media(max-width:1000px){.main{display:block!important;max-width:820px;padding:0 20px}#progressPanel{display:none}.kanban-board{grid-template-columns:repeat(2,minmax(0,1fr))}.focus{border:0;padding:0}.top{gap:8px}.tools .btn{font-size:12px}.progress .chip{font-size:9px;white-space:normal}}
+@media(max-width:600px){.kanban-board{grid-template-columns:1fr}.main{padding:0 16px}.focus{flex:1}.tools{width:100%;justify-content:flex-end}.top .brand{width:auto}.coach-reply{font-size:17px}.phaseNav{flex-wrap:wrap}.stage{padding:5px}.progress{padding:8px 12px}#log{padding:18px 0}.case-progress{display:none}.jump-link{font-size:11px;margin-left:5px}.progress #saveChip{max-width:100%}}
+
+/* APPROVED_STYLE_END */
+</style>
+</head>
+<body>
+<div class="app">
+ <header class="top">
+  <div class="brand"><span class="wordmark">TOMBOJ</span><span class="series">Automation Thursday</span></div>
+  <div class="focus" id="focus">Make the Case</div>
+  <div class="tools"><button class="btn primary sm" id="newIdeaBtn">＋ New idea</button><button class="btn ghost sm" id="railBtn" aria-controls="rail">Ideas</button><button class="btn sm" id="panelBtn" aria-controls="panel">My case</button><button class="btn ghost sm" id="moreBtn">More</button><button id="ctxBtn">Context</button><button id="setBtn">Settings</button><button id="expBtn">Export</button></div>
+ </header>
+ <div class="progress"><nav class="stages" id="phaseNav" aria-label="Conversation topics"></nav><span id="saveChip" role="status"></span><div id="notice"></div></div>
+ <div id="demoBanner" hidden></div>
+ <main class="main view-chat" id="main">
+  <section class="center" aria-label="Conversation"><div id="sendReview" class="send-review" hidden></div><div id="log" tabindex="-1" aria-live="polite"></div>
+   <div class="composer"><div class="composer-in"><div class="box"><label for="msg" id="composerLabel" class="composer-label">Your reply</label><textarea id="msg" rows="1" maxlength="4200" placeholder="Tell me in your own words…"></textarea><div class="box-foot"><div class="quick"><button class="btn ghost sm" data-q="dontknow">I don’t know yet</button><button class="btn ghost sm" data-q="example">Help me frame it</button></div><span id="count" class="count"></span><button class="btn primary" id="sendBtn">Send ↑</button></div></div><div class="disclose"><span id="discloseTx">Enter sends · Shift+Enter adds a line</span><span id="usageTx" class="mono"></span><button id="whatSent" class="linkbtn">What gets sent?</button></div></div></div>
+  </section>
+  <aside id="progressPanel" class="case-progress" aria-label="Your case progress"></aside>
+  <section id="rail" class="rail" aria-label="Your ideas"></section>
+  <section id="panel" class="panel" aria-label="Your full case"></section>
+ </main>
+</div>
+<div id="announce" class="sr" aria-live="polite"></div><dialog id="dlg" aria-labelledby="dlgTitle"></dialog>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- constants mirrored from the contract ---------- */
+var FIELDS=['status','problem','outcome','currentWork','proposedWork','exclusions','selectionReason','originator','businessOwner','collaborators','audiences','learning','permissions','reviewer','approvalEvidence','baselineSource','evidence','assumptions','openQuestions','testPlan','quality','stopRule','reviewDate','request','contribution','actualResult','resultSource','resultReviewer'];
+var METRICS=['volume','baselineMinutes','draftMinutes','reviewMinutes','coverage','uptake','supportHours','license','otherCost','setupCash','setupHours','hourlyRate','monthlyBenefit','months'];
+var CONTEXT=['company','role','goal','constraints','preferences'];
+var STATUSES=['Exploring','Developing','Needs review','Testing','Parked'];
+var PERMS=['Unknown','Needs review','Confirmed','Not permitted'];
+var PROTECTED=['status','permissions','reviewer','approvalEvidence','actualResult','resultSource','resultReviewer','contribution'];
+
+var FL={status:'Stage',problem:"What isn't working",outcome:'What better would look like',selectionReason:'Why this idea, now',
+currentWork:'How the work happens today',proposedWork:'What would change',exclusions:'Deliberately left out',
+originator:'Who raised it',businessOwner:'Proposed owner (unconfirmed)',collaborators:'Who would help',audiences:'Who it affects',learning:'Learning and support needed',
+permissions:'Permission to test',reviewer:'Who reviewed permission',approvalEvidence:'Decision reference',
+baselineSource:'Where the "today" figures come from',evidence:'Supporting evidence',assumptions:'Assumptions (not yet verified)',openQuestions:'Open questions',
+testPlan:'How to try it safely',quality:'What good enough means',stopRule:'When to continue, adapt or stop',reviewDate:'Review date',request:'What you are asking for',
+contribution:'Your contribution',actualResult:'Actual result',resultSource:'Where the result comes from',resultReviewer:'Result confirmed by'};
+var ML={volume:['Tasks per month','tasks'],baselineMinutes:['Minutes per task today','min'],draftMinutes:['Minutes per task with the change','min'],reviewMinutes:['Minutes checking and correcting per task','min'],
+coverage:['Share of tasks in scope','%'],uptake:['Uptake within that scope','%'],supportHours:['Ongoing support per month','hours'],license:['License or usage cost per month','cash'],
+otherCost:['Other recurring cost per month','cash'],setupCash:['One-off setup cost','cash'],setupHours:['One-off setup time','hours'],hourlyRate:['Cost per hour','cash'],
+monthlyBenefit:['Financial benefit per month','cash'],months:['Evaluation period','months']};
+
+var SECTIONS={
+  purpose:{no:'01',band:'Problem',fields:['problem','outcome','selectionReason']},
+  work:{no:'02',band:'The work',fields:['currentWork','proposedWork','exclusions']},
+  people:{no:'03',band:'People',fields:['originator','businessOwner','collaborators','audiences','learning']},
+  evidence:{no:'04',band:'Evidence',fields:['baselineSource','evidence','assumptions','openQuestions']},
+  next:{no:'05',band:'Next request',fields:['request','testPlan','quality','stopRule','reviewDate']},
+  metrics:{band:'Your inputs',metrics:true},
+  stage:{band:'Stage and permission',fields:['status','permissions','reviewer','approvalEvidence']},
+  result:{band:'Contribution and results',fields:['contribution','actualResult','resultSource','resultReviewer']},
+  title:{band:'Working title',title:true}
+};
+var TABS=[['case','Case'],['numbers','Numbers'],['pitch','Pitch'],['record','Your record']];
+var TAB_OF={purpose:'case',work:'case',people:'case',evidence:'case',next:'case',metrics:'numbers',stage:'record',result:'record',title:'record'};
+
+/* ---------- helpers ---------- */
+function $(id){return document.getElementById(id)}
+function h(tag,props){
+  var el=document.createElement(tag),k,v,i,kids=[].slice.call(arguments,2);
+  if(props)for(k in props){v=props[k];if(v===null||v===undefined||v===false)continue;
+    if(k==='class')el.className=v;else if(k==='text')el.textContent=v;else if(k==='value'){el.value=v;if(tag==='input'||tag==='option')el.setAttribute('value',v)}
+    else if(k.slice(0,2)==='on'&&typeof v==='function')el.addEventListener(k.slice(2).toLowerCase(),v);
+    else if(typeof v==='boolean'){el[k]=v;if(v&&(k==='selected'||k==='checked'))el.setAttribute(k,'')}else el.setAttribute(k,String(v));}
+  (function add(list){for(var childIndex=0;childIndex<list.length;childIndex++){var c=list[childIndex];if(c===null||c===undefined||c===false)continue;
+    if(Array.isArray(c)){add(c);continue}el.appendChild(c instanceof Node?c:document.createTextNode(String(c)));}})(kids);
+  return el;
+}
+function clear(el){while(el.firstChild)el.removeChild(el.firstChild);return el}
+function chip(text,tone,withDot,pulse){return h('span',{class:'chip'+(tone?' c-'+tone:'')},withDot?h('span',{class:'dot'+(pulse?' pulse':''),'aria-hidden':'true'}):null,text)}
+function fmtTime(iso){var d=new Date(iso);if(isNaN(d))return '';var now=new Date();
+  return d.toDateString()===now.toDateString()?d.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}):d.toLocaleDateString([], {month:'short',day:'numeric'})+' · '+d.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}
+function fmtDay(iso){var d=new Date(iso);return isNaN(d)?'':d.toLocaleDateString([], {month:'short',day:'numeric'})}
+function num(v){if(v===null||v===undefined||typeof v!=='number'||!isFinite(v))return null;return (Math.round(v*10)/10).toLocaleString()}
+function newId(){
+  if(window.crypto&&crypto.randomUUID)return crypto.randomUUID();
+  var a=new Uint8Array(16);(window.crypto||{getRandomValues:function(x){for(var i=0;i<x.length;i++)x[i]=Math.floor(Math.random()*256);return x}}).getRandomValues(a);
+  return 'r-'+Date.now().toString(36)+'-'+Array.prototype.map.call(a,function(b){return ('0'+b.toString(16)).slice(-2)}).join('');
+}
+function announce(t){var a=$('announce');a.textContent='';setTimeout(function(){a.textContent=t},30)}
+function clone(o){return JSON.parse(JSON.stringify(o))}
+
+/* ---------- state ---------- */
+var LIVE=!!(window.google&&google.script&&google.script.run);
+var S={ws:null,bootError:null,busy:false,busyLabel:'',pending:null,notice:null,disclosedFor:null,
+  panel:false,view:'chat',phase:0,reviewLater:{},tab:'case',edit:null,draftEdit:null,replyDrafts:{},save:{kind:'busy',text:'Opening…'},setAside:{},scrollNext:true,railOpen:false};
+
+function prov(id){var l=S.ws&&S.ws.settings&&Array.isArray(S.ws.settings.providers)?S.ws.settings.providers:[];for(var i=0;i<l.length;i++)if(l[i].id===id)return l[i];return null}
+function provLabel(id){var p=prov(id);return p?p.label:(id||'No provider')}
+function idea(){if(!S.ws||!S.ws.selectedId)return null;for(var i=0;i<S.ws.ideas.length;i++)if(S.ws.ideas[i].id===S.ws.selectedId)return S.ws.ideas[i];return null}
+function isWorkspace(d){return d&&typeof d==='object'&&Array.isArray(d.ideas)&&d.settings&&typeof d.settings==='object'&&d.context&&typeof d.context==='object'&&d.ideas.every(isIdea)}
+function isIdea(i){return i&&typeof i.id==='string'&&typeof i.title==='string'&&Number.isInteger(i.revision)&&i.fields&&i.metrics&&Array.isArray(i.messages)}
+
+/* ---------- gateway ---------- */
+function call(action,payload){
+  payload=payload||{};
+  return new Promise(function(resolve,reject){
+    function fail(kind,msg){var e=new Error(msg);e.kind=kind;reject(e)}
+    function handle(r){
+      if(!r||typeof r!=='object'||typeof r.ok!=='boolean')return fail('malformed','The workspace sent back something this screen could not read. Nothing new is shown as saved.');
+      if(r.ok)resolve(r.data);else fail('server',String(r.error||'The request could not be completed.'));
+    }
+    if(!LIVE){Demo.api({action:action,payload:payload}).then(handle);return}
+    google.script.run.withSuccessHandler(handle)
+      .withFailureHandler(function(){fail('transport','Google could not complete the request. Reopen the workspace before retrying.')})
+      .api({action:action,payload:payload});
+  });
+}
+function classify(msg){
+  if(/changed in another window|no longer current|no longer in the workspace/i.test(msg))return 'stale';
+  if(/daily request limit|rate or quota/i.test(msg))return 'limit';
+  if(/API key in settings|API key for the selected provider|Choose an AI provider/i.test(msg))return 'nokey';
+  if(/has no saved reply/i.test(msg))return 'interrupted';
+  if(/Set up \/ check workspace|Run setup again|different headers|Missing workspace tab/i.test(msg))return 'setup';
+  return 'error';
+}
+function setBusy(on,label){S.busy=on;S.busyLabel=label||'';if(on)S.save={kind:'busy',text:label||'Working…'};renderChrome()}
+function markSaved(text){S.save=LIVE?{kind:'saved',text:(text||'Saved to your Sheet')+' · '+new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}:{kind:'demo',text:'Demo only · not saved'};}
+function setNotice(kind,text,action){S.notice={kind:kind,text:text,action:action||null};renderNotice()}
+
+function boot(){
+  S.bootError=null;S.ws=S.ws||null;setBusy(true,'Opening your workspace…');renderAll();
+  call('bootstrap').then(function(d){
+    if(!isWorkspace(d))throw Object.assign(new Error('The workspace data was incomplete. Nothing has been changed.'),{kind:'malformed'});
+    S.ws=d;S.save=LIVE?{kind:'saved',text:'Loaded from your Sheet'}:{kind:'demo',text:'Demo only · not saved'};S.scrollNext=true;
+  }).catch(function(e){S.bootError=e.message;S.save={kind:'error',text:'Not loaded'}})
+  .then(function(){setBusy(false);if(S.ws&&!S.bootError)S.save=S.save.kind==='busy'?{kind:'saved',text:'Loaded'}:S.save;renderAll()});
+}
+
+function reloadAfterStale(msg){
+  setNotice('stale',msg+' The latest saved version has been reopened. Anything you had typed is still here — review the case before saving again.');
+  return call('bootstrap').then(function(d){if(isWorkspace(d)){S.ws=d;S.save={kind:'saved',text:'Reloaded latest version'}}})
+    .catch(function(e){S.save={kind:'error',text:'Reload failed'};setNotice('error','The case could not be reopened: '+e.message)})
+    .then(renderAll);
+}
+
+function mutate(action,payload,okText){
+  if(S.busy)return Promise.resolve(false);
+  setBusy(true,'Saving…');
+  return call(action,payload).then(function(d){
+    if(!isWorkspace(d))throw Object.assign(new Error('The save response was incomplete. Reopen the workspace to confirm what was saved.'),{kind:'malformed'});
+    S.ws=d;markSaved(okText);announce(LIVE?(okText||'Saved to your Sheet'):'Changed in the demo only');return true;
+  }).catch(function(e){return handleErr(e).then(function(){return false})})
+  .then(function(ok){setBusy(false);renderAll();return ok});
+}
+function handleErr(e){
+  var kind=e.kind==='server'?classify(e.message):e.kind;
+  S.save={kind:'error',text:kind==='transport'||kind==='malformed'?'Save not confirmed':'Not saved'};
+  if(kind==='stale')return reloadAfterStale(e.message);
+  if(kind==='transport'||kind==='malformed')setNotice('error',e.message+' Reopen the workspace to see what was recorded.',{label:'Reopen workspace',fn:boot});
+  else if(kind==='setup')setNotice('error',e.message);
+  else setNotice('error',e.message);
+  return Promise.resolve();
+}
+
+/* ---------- chat ---------- */
+function send(fromRetry){
+  if(S.busy||!S.ws)return;
+  if(hasUnsavedEdits()){setNotice('info','Save or cancel your edits before sending the next message.');return}
+  var box=$('msg'),text=fromRetry?S.pending.message:box.value.trim();
+  if(!fromRetry&&S.topic&&text){text='Focus: '+S.topic.label+'\n'+text;box.value=text;S.topic=null;}
+  if(!text){box.focus();return}
+  if(text.length>4000){setNotice('error','Messages can be up to 4,000 characters. This one is '+text.length.toLocaleString()+'. Shorten it or split it into two.');return}
+  var cfg=S.ws.settings;
+  if(LIVE&&!cfg.provider){openSettings('Choose the AI service you have an API key for. Your message is kept in the box.');return}
+  if(LIVE&&!cfg.hasKey){openSettings('Add your '+provLabel(cfg.provider)+' API key before sending. Your message is kept in the box.');return}
+  if(LIVE&&S.disclosedFor!==cfg.provider){openDisclosure(true);return}
+  var u=S.ws.usage,limit=S.ws.settings.maxCallsPerDay;
+  if(fromRetry&&S.pending&&S.pending.state==='uncertain'&&LIVE&&(S.pending.provider!==cfg.provider||S.pending.model!==cfg.model)){
+    setNotice('error','Return to the original provider and model before retrying this unconfirmed request. A different service must be a new, intentional attempt.');return}
+  if(LIVE&&!fromRetry&&u&&Number.isInteger(u.calls)&&u.calls>=limit){setNotice('limit','You have used today\'s '+limit+' requests. The limit resets at midnight UTC. Your message is kept here; you can raise the limit in Settings.',{label:'Settings',fn:function(){openSettings()}});return}
+  S.notice=null;renderNotice();
+  var p0=Promise.resolve(S.ws.selectedId);
+  if(!S.ws.selectedId){
+    setBusy(true,'Creating a working idea…');
+    p0=call('createIdea',{title:'Explore my work',problem:''}).then(function(d){
+      if(!isWorkspace(d)||!d.selectedId)throw Object.assign(new Error('The new idea could not be confirmed. Reopen the workspace.'),{kind:'malformed'});
+      S.ws=d;markSaved('Working idea created');renderAll();return d.selectedId;
+    });
+  }
+  p0.then(function(ideaId){
+    var reuse=S.pending&&S.pending.state==='uncertain'&&S.pending.message===text&&S.pending.ideaId===ideaId;
+    S.pending={ideaId:ideaId,message:text,requestId:reuse?S.pending.requestId:newId(),provider:cfg.provider,model:cfg.model,state:'sending',retry:!!reuse};
+    S.scrollNext=true;setBusy(true,LIVE?'Waiting for the coach…':'Preparing scripted reply…');renderAll();
+    return call('chat',{ideaId:ideaId,message:text,requestId:S.pending.requestId}).then(function(d){
+      if(!d||!isIdea(d.idea))throw Object.assign(new Error('The reply arrived incomplete.'),{kind:'malformed'});
+      var list=S.ws.ideas;for(var i=0;i<list.length;i++)if(list[i].id===d.idea.id)list[i]=d.idea;
+      if(d.usage)S.ws.usage=d.usage;
+      delete S.setAside[ideaId];
+      if(S.reviewLater)delete S.reviewLater[ideaId];S.topic=null;
+      if($('msg').value.trim()===S.pending.message)$('msg').value='';
+      autosize();
+      S.pending=null;markSaved('Reply saved to your Sheet');S.scrollNext=true;
+      announce(LIVE?'The coach replied.'+(d.draft?' It suggested changes for you to review.':''):'Scripted demo reply shown.');
+    }).catch(function(e){
+      var kind=e.kind==='server'?classify(e.message):e.kind;
+      if(kind==='transport'||kind==='malformed'){S.pending.state='uncertain';S.pending.error=e.message;S.save={kind:'error',text:'Reply not confirmed'}}
+      else{
+        S.pending.state='failed';S.pending.error=e.message;S.pending.kind=kind;S.save={kind:'error',text:'No reply saved'};
+        if(kind==='stale'){S.pending=null;return reloadAfterStale(e.message)}
+        if(kind==='nokey'){S.pending=null;openSettings(e.message)}
+        if(kind==='limit'){S.pending=null;setNotice('limit',e.message+' Your message is kept here.')}
+      }
+    });
+  }).catch(function(e){return handleErr(e)}).then(function(){setBusy(false);renderAll()});
+}
+
+/* ---------- rendering ---------- */
+function renderAll(){renderChrome();renderRail();renderLog();renderPanel();renderNotice()}
+
+function renderChromeLegacy(){
+  var i=idea(),f=$('focus');clear(f);
+  if(i){f.appendChild(h('span',{class:'label hide-narrow'},'Focus'));f.appendChild(h('span',{class:'t',title:i.title},i.title));f.appendChild(h('span',{class:'hide-narrow'},chip(i.fields.status,null)))}
+  else if(S.ws)f.appendChild(h('span',{class:'t',style:'color:var(--tb-soft);font-weight:500'},'No idea selected yet'));
+  var c=$('saveChip');clear(c);
+  var map={busy:['motion',true],saved:['done',false],error:['safety',false],demo:['decision',false]},m=map[S.save.kind]||['muted',false];
+  c.appendChild(chip(S.save.text,m[0],true,S.save.kind==='busy'&&S.busy));
+  var pb=$('panelBtn');pb.setAttribute('aria-pressed',String(S.panel));pb.textContent=S.panel?'Hide case':'Show case';
+  $('main').classList.toggle('no-panel',!S.panel);
+  var send=$('sendBtn'),box=$('msg');
+  send.disabled=S.busy||!S.ws;send.textContent=S.busy&&S.pending&&S.pending.state==='sending'?'Waiting…':i?'Send reply':'Start conversation';
+  $('composerLabel').textContent=i?'Reply to coach about: '+i.title:'Start with your work or an idea';
+  box.placeholder=i?'Answer the coach’s question or add information to this idea.':'Describe your work or an idea. Rough is fine.';
+  box.readOnly=S.busy;box.setAttribute('aria-busy',String(S.busy));
+  [].forEach.call(document.querySelectorAll('[data-q]'),function(b){b.disabled=S.busy||!S.ws});
+  ['ctxBtn','setBtn','expBtn','moreBtn'].forEach(function(id){$(id).disabled=!S.ws});
+  var u=S.ws&&S.ws.usage,st=S.ws&&S.ws.settings;
+  $('usageTx').textContent=!S.ws?'':LIVE?((st.provider?provLabel(st.provider)+' · '+st.model:'No AI provider chosen')+' · '+(u&&Number.isInteger(u.calls)?u.calls:0)+' / '+st.maxCallsPerDay+' today (UTC)'+(st.provider&&!st.hasKey?' · no key':'')):'Demonstration — no AI calls';
+  updateCount();
+  var db=$('demoBanner');
+  if(!LIVE&&!db.firstChild){db.hidden=false;db.className='demo-banner';db.setAttribute('role','note');
+    db.appendChild(h('b',null,'DEMONSTRATION'));
+    db.appendChild(h('span',null,'Fictional Northstar data. No AI is called, replies are scripted, and nothing is saved to Google Sheets. Changes vanish when you close this window.'))}
+}
+function updateCount(){var n=$('msg').value.length,c=$('count');c.textContent=n>3000?n.toLocaleString()+' / 4,000':'';c.classList.toggle('over',n>4000)}
+
+function renderRail(){
+  var r=$('rail');clear(r);r.classList.toggle('open',S.railOpen);$('railBtn').setAttribute('aria-expanded',String(S.railOpen));
+  var ideas=S.ws?S.ws.ideas:[];
+  r.appendChild(h('div',{class:'rail-head'},h('span',{class:'label'},'Ideas · '+ideas.length),
+    h('button',{class:'btn sm',onClick:openNewIdea,disabled:S.busy||!S.ws},'New idea')));
+  if(!ideas.length){
+    r.appendChild(h('p',{style:'margin:0;padding:4px 16px;font-size:13.5px;color:var(--tb-muted);line-height:1.5'},S.ws?'Your ideas will collect here. The first one is created when you send a message.':''));
+  }else{
+    var ul=h('ul',{role:'list'});
+    ideas.forEach(function(i){
+      var sel=i.id===S.ws.selectedId;
+      ul.appendChild(h('li',null,h('button',{class:'idea','aria-current':sel?'true':'false',disabled:S.busy&&!sel,onClick:function(){selectIdea(i.id)}},
+        h('span',{class:'n'},i.title),
+        h('span',{class:'m'},sel?h('span',{class:'f'},'FOCUS'):null,h('span',null,i.fields.status),h('span',null,fmtDay(i.updatedAt)),i.draft?h('span',{class:'c-ai'},'suggestion'):null))));
+    });
+    r.appendChild(ul);
+  }
+  r.appendChild(h('div',{class:'rail-foot'},LIVE?'Every idea stays here. Switch any time; the conversation for each is kept in your Sheet.':'Every idea stays here. Switch any time. In the demonstration nothing is kept after you close.'));
+}
+function selectIdea(id){
+  S.railOpen=false;
+  if(S.ws.selectedId===id){renderRail();return}
+  if(!canLeaveEdits())return;
+  S.replyDrafts[S.ws.selectedId||'new']=$('msg').value;
+  $('msg').value=S.replyDrafts[id]||'';autosize();
+  S.edit=null;S.scrollNext=true;
+  mutate('selectIdea',{ideaId:id},'Focus changed');
+}
+
+function renderLog(){
+  var log=$('log');clear(log);var t=h('div',{class:'thread'});log.appendChild(t);
+  if(S.bootError){
+    t.appendChild(h('div',{class:'card',style:'border-color:color-mix(in srgb,var(--tb-safety) 50%,transparent)'},
+      h('div',{class:'band'},h('span',{class:'k c-safety'},'Could not open the workspace')),
+      h('div',{class:'body'},h('p',{style:'margin:0 0 12px'},S.bootError),
+        h('p',{class:'fine',style:'margin:0 0 12px'},'If this is a new Sheet, close this window and choose Make the Case → Set up / check workspace, then open the coach again.'),
+        h('button',{class:'btn',onClick:boot},'Try again'))));
+    return;
+  }
+  if(!S.ws){t.appendChild(h('div',{class:'loading'},chip('Opening your workspace','motion',true,true)));return}
+  var i=idea();
+  if(!i||!i.messages.length)t.appendChild(opener(i));
+  if(i){
+    if(i.messageCount>i.messages.length)t.appendChild(h('p',{class:'note'},'Showing the latest '+i.messages.length+' of '+i.messageCount+' messages. Earlier ones are kept in the History tab of your Sheet.'));
+    i.messages.forEach(function(m){t.appendChild(message(m))});
+  }
+  if(S.pending&&(!i||S.pending.ideaId===i.id))t.appendChild(pendingCard());
+  if(i&&i.draft)t.appendChild(draftCard(i));
+  else if(i&&S.setAside[i.id])t.appendChild(h('p',{class:'note'},'The earlier suggestion was set aside because you edited the case. Your edit is what\'s saved.'));
+  if(i)t.appendChild(continueCard(i));
+  if(S.scrollNext){S.scrollNext=false;requestAnimationFrame(function(){log.scrollTop=log.scrollHeight})}
+}
+function opener(i){
+  var starters=[['I don\'t have an idea yet','I don\'t have a specific idea yet. Here\'s what my work involves: '],
+    ['I have several ideas','I have a few ideas and I\'m not sure which is worth pursuing: '],
+    ['Something I proposed stalled','I suggested an improvement before and it stalled. Here\'s what happened: ']];
+  return h('div',{class:'card opener'},
+    h('div',{class:'band'},h('span',{class:'k',style:'color:var(--tb-ink)'},'Make the Case'),h('span',{class:'sp'}),h('span',{class:'meta'},'Automation Thursday')),
+    h('div',{class:'body'},
+      h('div',{class:'eb'},i?'Focus · '+i.title:'Start here · no idea needed yet'),
+      h('h1',null,'Tell me about your work and something you\'d like to improve.'),
+      h('p',null,'Start rough. A few sentences about what you do and what gets in the way is plenty — you don\'t need a finished idea or any business-case vocabulary. We\'ll work out the problem, the people involved, the evidence and the right next request together.'),
+      h('div',{class:'starters'},starters.map(function(s){return h('button',{class:'btn sm',onClick:function(){fill(s[1])}},s[0])}),
+        h('button',{class:'btn ghost sm',onClick:openExample},'See a fictional example'))));
+}
+function message(m){
+  var user=m.role==='user';
+  return h('article',{class:'card msg '+(user?'user':'coach')},
+    h('div',{class:'band'},h('span',{class:'k'},user?'You':(LIVE?'Coach · AI reply':'Coach · scripted demo reply')),h('span',{class:'sp'}),h('time',{datetime:m.at},fmtTime(m.at))),
+    h('div',{class:'body'},m.text,
+      user&&m.status==='failed'?h('p',{class:'fine c-safety'},'Request failed. No reply was saved. Sending again is a new, intentional attempt.'):null,
+      user&&m.status==='unanswered'?h('p',{class:'fine c-decision'},'No saved reply. This request may have been interrupted; check its state before making a new attempt.'):null));
+}
+function pendingCard(){
+  var p=S.pending,st=p.state,head={sending:LIVE?'Request in progress · '+provLabel(S.ws.settings.provider):'Scripted demo reply on the way',uncertain:'Not confirmed',failed:'No reply saved'}[st];
+  var kids=[h('div',{class:'quote'},p.message)];
+  if(st==='sending')kids.unshift(h('p',null,LIVE?(p.retry?'Checking the same request again. If it already succeeded, the saved reply comes back without another paid call.':'Sent. One request is open; replies usually take a few seconds.'):'No AI is involved in the demonstration.'));
+  if(st==='uncertain'){
+    kids.unshift(h('p',null,'Google didn\'t confirm whether this message was received. Retrying uses the same request, so if it already went through you\'ll get the saved reply without a second paid call.'));
+    kids.push(h('div',{class:'row'},h('button',{class:'btn primary sm',onClick:function(){send(true)},disabled:S.busy},'Retry same request'),
+      h('button',{class:'btn ghost sm',onClick:boot,disabled:S.busy},'Reopen workspace')));
+  }
+  if(st==='failed'){
+    kids.unshift(h('p',null,p.error));
+    kids.push(h('p',{class:'fine',style:'margin:0'},(p.kind==='interrupted'?'That attempt failed or was interrupted. ':'')+'Your message is still in the box below. Sending it again is a new, intentional attempt and counts as a new request.'));
+  }
+  return h('div',{class:'card pending '+st,role:st==='sending'?'status':'alert'},
+    h('div',{class:'band'},h('span',{class:'k'},head),h('span',{class:'sp'}),st==='sending'?h('span',{class:'dot c-motion pulse','aria-hidden':'true'}):null),
+    h('div',{class:'body'},kids));
+}
+function nextStep(i){
+  var f=i.fields,m=i.metrics,steps=[
+    ['problem','What is not working today, and who experiences it?','What is not working today: '],
+    ['outcome','What business or customer outcome would make this worthwhile?','The outcome we want is: '],
+    ['currentWork','How does this work get done today?','Today the work happens like this: '],
+    ['proposedWork','What would change, and what would a person still check?','The proposed change is: '],
+    ['baselineSource','Where do the current numbers come from, or how could you measure them?','Our baseline evidence or measurement plan is: '],
+    ['businessOwner','Who should own the business outcome? This can be a proposed owner.','A proposed business owner is: '],
+    ['testPlan','What small investigation could test the idea before a wider rollout?','A small investigation could be: '],
+    ['quality','What quality checks would a successful trial need?','Good enough would mean: '],
+    ['stopRule','When would you continue, adapt, or stop?','We would continue, adapt, or stop when: '],
+    ['request','What decision or support are you asking for?','The decision or support I am asking for is: ']
+  ];
+  for(var x=0;x<steps.length;x++)if(!String(f[steps[x][0]]||'').trim())return {question:steps[x][1],prefix:steps[x][2]};
+  var required=['volume','baselineMinutes','draftMinutes','reviewMinutes','coverage','uptake','supportHours'];
+  for(var y=0;y<required.length;y++)if(m[required[y]]===null)return {question:'What is your estimate for '+ML[required[y]][0].toLowerCase()+'? Include its source, or say it is unknown.',prefix:ML[required[y]][0]+': '};
+  return {question:'Review your pitch draft and its open questions. Is the next request clear and supported?',prefix:'Help me review my pitch for gaps before I share it. '};
+}
+function continueCard(i){
+  var next=nextStep(i),count=i.draft?Object.keys(i.draft.fields).length+Object.keys(i.draft.metrics).length:0;
+  return h('section',{class:'card resume','aria-label':'Continue this idea'},
+    h('div',{class:'band'},h('span',{class:'k'},'Continue this idea')),
+    h('div',{class:'body'},h('p',null,count?'You have '+count+' suggestions awaiting review. Use or edit each above; you can keep talking while other suggestions remain.':LIVE?'Your saved case is loaded. Saving notes does not send another message to the coach.':'Your fictional case is ready to explore.'),
+      h('p',null,h('strong',null,'Next: '),next.question),
+      h('div',{class:'row'},h('button',{class:'btn primary sm',disabled:S.busy,onClick:function(){fill(next.prefix)}},'Answer next question'),
+        h('button',{class:'btn sm',disabled:S.busy,onClick:function(){if(!canLeaveEdits())return;S.panel=true;S.tab='pitch';renderAll()}},'View pitch draft')),
+      h('p',{class:'fine'},'Reply below to continue this idea. Use New idea in the ideas list for a separate opportunity. No AI request happens until you send.')));
+}
+function draftCard(i){
+  var d=i.draft,stale=d.baseRevision!==i.revision,rows=[];
+  Object.keys(d.fields||{}).forEach(function(k){rows.push(suggestionRow(i,'fields',k,stale))});
+  Object.keys(d.metrics||{}).forEach(function(k){var cur=num(i.metrics[k]),nv=num(d.metrics[k]),u=ML[k]?ML[k][1]:'';
+    rows.push(suggestionRow(i,'metrics',k,stale))});
+  return h('section',{class:'card draft','aria-label':'Suggested changes awaiting your review'},
+    h('div',{class:'band'},h('span',{class:'k'},'AI suggestion'),h('span',null,'· awaiting your review'),h('span',{class:'sp'}),h('span',{class:'meta'},rows.length+(rows.length===1?' change':' changes'))),
+    h('div',{class:'body'},
+      d.reason?h('p',{class:'reason'},d.reason):null,
+      rows,
+      stale?h('p',{class:'err'},'This suggestion was based on an earlier version of the case and can no longer be accepted.'):null,
+      h('div',{class:'row',style:'margin-top:12px'},
+        h('button',{class:'btn ai',disabled:S.busy||stale,onClick:function(){if(canLeaveEdits())acceptDraft(i)}},LIVE?'Use all remaining suggestions':'Use all remaining (demo)')),
+      h('p',{class:'fine'},'Nothing changes until you accept. Accepting records these as your working notes — it doesn\'t verify them, and it isn\'t approval from anyone at your company. You can also leave it and keep talking.')));
+}
+function change(label,now,nowEmpty,next){
+  return h('div',{class:'change'},h('div',{class:'f'},label),
+    h('div',{class:'pair'},h('div',{class:'now'+(nowEmpty?' empty':'')},h('span',{class:'lbl'},'Current answer · read only'),now),h('div',{class:'new'},h('span',{class:'lbl'},'AI suggestion · review below'),next)));
+}
+function suggestionRow(i,group,key,stale){
+  var numeric=group==='metrics',d=i.draft,label=numeric?ML[key][0]+' ('+ML[key][1]+')':FL[key],now=i[group][key],value=d[group][key];
+  var row=change(label,now===null||now===''?'Not added yet':String(now),now===null||now==='',value===null?'Unknown':value===''?'(clear this field)':String(value));
+  var editing=S.draftEdit&&S.draftEdit.ideaId===i.id&&S.draftEdit.group===group&&S.draftEdit.key===key;
+  if(key==='openQuestions')row.appendChild(h('p',{class:'hint'},'These are unresolved questions, not verified answers. Edit the list to keep track of what still needs an answer; reply to the coach below to work through one.'));
+  if(editing){
+    var E=S.draftEdit,id='suggestion-'+key,ctl=numeric?h('input',{class:'inp',id:id,type:'number',min:'0',step:'any',value:E.value,onInput:function(e){E.value=e.target.value}}):h('textarea',{class:'inp',id:id,rows:'4',maxlength:'2400',value:E.value,onInput:function(e){E.value=e.target.value}});
+    row.appendChild(h('form',{class:'form inline-review',onSubmit:function(e){e.preventDefault();var v=numeric?(String(E.value).trim()===''?null:Number(E.value)):E.value;reviewOne(i,group,key,v,false)}},
+      h('label',{for:id},'Your editable answer'),ctl,h('div',{class:'row'},
+        h('button',{class:'btn primary sm',type:'submit',disabled:S.busy||stale},LIVE?'Save this answer':'Save answer (demo)'),
+        h('button',{class:'btn ghost sm',type:'button',onClick:function(){if(canLeaveEdits()){S.draftEdit=null;renderLog()}}},'Cancel'))));
+  }else row.appendChild(h('div',{class:'row suggestion-actions'},
+    h('button',{class:'btn primary sm',disabled:S.busy||stale,onClick:function(){if(canLeaveEdits())reviewOne(i,group,key,value,false)}},'Use suggestion'),
+    h('button',{class:'btn sm',disabled:S.busy||stale,onClick:function(){startSuggestionEdit(i,group,key,value)}},'Edit suggestion'),
+    h('button',{class:'btn sm',disabled:S.busy||stale,onClick:function(){startSuggestionEdit(i,group,key,now===null?'':now)}},'Write my own'),
+    h('button',{class:'btn ghost sm',disabled:S.busy||stale,onClick:function(){if(canLeaveEdits())reviewOne(i,group,key,null,true)}},'Skip for now')));
+  return row;
+}
+function startSuggestionEdit(i,group,key,value){
+  if(!canLeaveEdits())return;
+  S.draftEdit={ideaId:i.id,group:group,key:key,value:value===null?'':String(value),original:value===null?'':String(value)};renderAll();
+  var el=$('suggestion-'+key);if(el)el.focus();
+}
+function reviewOne(i,group,key,value,skip){
+  if(group==='metrics'&&value!==null&&(!Number.isFinite(value)||value<0)){setNotice('error','Use a non-negative number, or leave it empty for unknown.');return}
+  var p={ideaId:i.id,draftId:i.draft.id,revision:i.revision,fields:{},metrics:{},skip:[]};
+  if(skip)p.skip.push(group+'.'+key);else p[group][key]=value;
+  mutate('reviewDraft',p,skip?'Suggestion skipped; saved answer unchanged':'Answer saved to your Sheet').then(function(ok){if(ok){S.draftEdit=null;renderAll()}});
+}
+function acceptDraft(i){mutate('acceptDraft',{ideaId:i.id,draftId:i.draft.id,revision:i.revision},'Suggestion saved to your Sheet')}
+function editFromDraft(i){
+  var keys=Object.keys(i.draft.fields||{}),sec='metrics';
+  if(keys.length)for(var s in SECTIONS)if(SECTIONS[s].fields&&SECTIONS[s].fields.indexOf(keys[0])>=0){sec=s;break}
+  S.panel=true;S.tab=TAB_OF[sec];startEdit(sec);renderAll();
+}
+
+function renderNotice(){
+  var n=$('notice');clear(n);if(!S.notice)return;
+  var tone={stale:'decision',limit:'decision',error:'safety',info:'human'}[S.notice.kind]||'muted',
+      lbl={stale:'Reloaded',limit:'Usage limit',error:'Problem',info:'Note'}[S.notice.kind]||'Note';
+  n.appendChild(h('div',{class:'notice',role:'alert'},chip(lbl,tone,true),h('span',{class:'tx'},S.notice.text),
+    S.notice.action?h('button',{class:'btn sm',onClick:S.notice.action.fn},S.notice.action.label):null,
+    h('button',{class:'btn ghost sm','aria-label':'Dismiss',onClick:function(){S.notice=null;renderNotice()}},'Dismiss')));
+}
+
+/* ---------- case panel ---------- */
+function renderPanel(){
+  var p=$('panel');clear(p);var i=idea();
+  var head=h('div',{class:'panel-head'},h('div',{class:'row'},h('span',{class:'label'},'The case taking shape'),
+    h('button',{class:'btn ghost sm',onClick:function(){S.panel=false;renderAll();$('panelBtn').focus()}},'Close')));
+  p.appendChild(head);
+  if(!i){p.appendChild(h('div',{class:'panel-body'},h('p',{class:'panel-empty'},'Once you start talking, the problem, people, evidence and next request will collect here — in your words, with anything uncertain marked as such.')));return}
+  var st=i.fields.status,stepIdx={Exploring:0,Developing:1,'Needs review':1,Testing:2}[st];
+  var sp=h('div',{class:'spine','aria-label':'Stage: '+st});
+  ['Collect','Develop','Advance'].forEach(function(s,ix){if(ix)sp.appendChild(h('span',{class:'ln','aria-hidden':'true'}));
+    sp.appendChild(h('span',{class:'st'+(stepIdx===ix?' on':stepIdx>ix?' past':'')},h('i',{'aria-hidden':'true'},'0'+(ix+1)),s))});
+  head.appendChild(sp);
+  head.appendChild(h('div',{class:'hint',style:'margin:4px 0 0'},st==='Parked'?'Parked — kept for later.':'Stage: '+st+' · set by you in Your record'));
+  var tabs=h('div',{class:'tabs',role:'tablist','aria-label':'Case views'});
+  TABS.forEach(function(t){tabs.appendChild(h('button',{class:'tab',role:'tab',id:'tab-'+t[0],'aria-selected':S.tab===t[0]?'true':'false',tabindex:S.tab===t[0]?'0':'-1',
+    onClick:function(){if(!canLeaveEdits())return;S.tab=t[0];renderAll()},onKeydown:tabKeys},t[1]))});
+  p.appendChild(tabs);
+  var b=h('div',{class:'panel-body',role:'tabpanel','aria-labelledby':'tab-'+S.tab});p.appendChild(b);
+  if(S.tab==='case'){b.appendChild(decisionCard(i));['purpose','work','people','evidence','next'].forEach(function(s){b.appendChild(section(i,s))})}
+  if(S.tab==='numbers'){b.appendChild(forecastCard(i));b.appendChild(section(i,'metrics'))}
+  if(S.tab==='pitch')b.appendChild(pitchCard(i));
+  if(S.tab==='record'){
+    b.appendChild(h('p',{class:'hint',style:'margin:0 2px'},'These are your own records. The coach can\'t set them, and recording them here doesn\'t grant permission or verify a result.'));
+    ['stage','result','title'].forEach(function(s){b.appendChild(section(i,s))});
+    b.appendChild(h('div',{class:'card sec'},h('div',{class:'band'},h('span',{class:'k c-safety'},'Remove')),
+      h('div',{class:'body'},h('p',{class:'hint',style:'margin:0'},'Deletes this case and its conversation from the active workbook.'),
+        h('div',null,h('button',{class:'btn danger sm',disabled:S.busy,onClick:function(){openDelete(i)}},'Delete this idea…')))));
+  }
+}
+function tabKeys(e){
+  var ix=TABS.map(function(t){return t[0]}).indexOf(S.tab);
+  if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();if(!canLeaveEdits())return;ix=(ix+(e.key==='ArrowRight'?1:TABS.length-1))%TABS.length;S.tab=TABS[ix][0];renderAll();$('tab-'+S.tab).focus()}
+}
+function decisionCard(i){
+  var f=i.forecast||{},checks=Array.isArray(f.checks)?f.checks:[];
+  return h('div',{class:'card decision'},h('div',{class:'band'},h('span',{class:'dia','aria-hidden':'true'}),h('span',{class:'k'},'Next decision'),h('span',{class:'sp'}),h('span',{class:'meta'},checks.length+' open')),
+    h('div',{class:'body'},h('div',{class:'big'},f.nextDecision||'Not established'),
+      checks.length?h('ul',null,checks.map(function(c){return h('li',null,c)})):h('p',{class:'hint',style:'margin:0'},'No open checks recorded.')));
+}
+function section(i,key){
+  var s=SECTIONS[key],editing=S.edit&&S.edit.ideaId===i.id&&S.edit.section===key;
+  var band=h('div',{class:'band'},s.no?h('span',{class:'no'},s.no):null,h('span',{class:'k',style:'color:var(--tb-soft)'},s.band),h('span',{class:'sp'}),
+    h('button',{class:'btn ghost sm',disabled:S.busy,'aria-label':(editing?'Close editor for ':'Edit ')+s.band,onClick:function(){if(editing){if(canLeaveEdits())renderAll()}else if(startEdit(key)){renderAll();focusEdit()}}},editing?'Close editor':'Edit'));
+  var body=h('div',{class:'body'});
+  if(editing)body.appendChild(editForm(i,key));
+  else if(s.title)body.appendChild(fld('Title',i.title));
+  else if(s.metrics)METRICS.forEach(function(k){var v=num(i.metrics[k]);body.appendChild(fld(ML[k][0],v===null?'':v+' '+ML[k][1],null,'Not established'))});
+  else s.fields.forEach(function(k){
+    var tag=k==='openQuestions'&&i.fields[k]?chip('Unresolved','decision',true):k==='assumptions'&&i.fields[k]?chip('Assumption','decision'):k==='businessOwner'&&i.fields[k]?chip('Unconfirmed',null):k==='actualResult'&&i.fields[k]?chip('Reader-reported','human'):null;
+    body.appendChild(fld(FL[k],i.fields[k],tag));
+  });
+  return h('div',{class:'card sec'},band,body);
+}
+function fld(label,val,tag,emptyText){
+  var empty=!String(val||'').trim();
+  return h('div',{class:'fld'},h('div',{class:'fl'},label,tag),h('div',{class:'fv'+(empty?' empty':'')},empty?(emptyText||'Not yet established'):val));
+}
+function startEdit(key){
+  if(!canLeaveEdits())return false;
+  var i=idea(),s=SECTIONS[key],vals={};
+  if(s.title)vals.title=i.title;else if(s.metrics)METRICS.forEach(function(k){vals[k]=i.metrics[k]===null?'':String(i.metrics[k])});else s.fields.forEach(function(k){vals[k]=i.fields[k]});
+  S.edit={ideaId:i.id,section:key,vals:vals,original:JSON.stringify(vals),error:''};return true;
+}
+function hasUnsavedEdits(){return !!((S.edit&&JSON.stringify(S.edit.vals)!==S.edit.original)||(S.draftEdit&&S.draftEdit.value!==S.draftEdit.original))}
+function canLeaveEdits(){
+  if(hasUnsavedEdits()&&!window.confirm('You have unsaved edits. Discard them and continue? Cancel to keep editing.'))return false;
+  S.edit=null;S.draftEdit=null;return true;
+}
+function focusEdit(){setTimeout(function(){var el=document.querySelector('#panel .form .inp');if(el)el.focus()},0)}
+function editForm(i,key){
+  var s=SECTIONS[key],E=S.edit,form=h('form',{class:'form',onSubmit:function(e){e.preventDefault();saveEdit()}});
+  function bind(k){return function(e){E.vals[k]=e.target.value}}
+  if(i.draft)form.appendChild(h('p',{class:'hint',style:'margin:0;color:var(--tb-ai)'},'Saving an edit sets aside the pending AI suggestion.'));
+  if(s.title)form.appendChild(h('div',null,h('label',{for:'e-title'},'Working title'),h('input',{class:'inp',id:'e-title',maxlength:'180',value:E.vals.title,onInput:bind('title')})));
+  else if(s.metrics){
+    form.appendChild(h('p',{class:'hint',style:'margin:0'},'Leave a box empty if you don\'t know yet — empty means unknown, not zero. Use one currency for every cost.'));
+    METRICS.forEach(function(k){form.appendChild(h('div',null,h('label',{for:'e-'+k},ML[k][0]+' ('+ML[k][1]+')'),
+      h('input',{class:'inp mono',id:'e-'+k,type:'number',inputmode:'decimal',min:k==='months'?'1':'0',max:k==='coverage'||k==='uptake'?'100':k==='months'?'120':null,step:'any',value:E.vals[k],onInput:bind(k)})))});
+  }else s.fields.forEach(function(k){
+    var id='e-'+k,ctl;
+    if(k==='status')ctl=h('select',{class:'inp',id:id,onChange:bind(k)},STATUSES.map(function(o){return h('option',{value:o,selected:E.vals[k]===o},o)}));
+    else if(k==='permissions')ctl=h('select',{class:'inp',id:id,onChange:bind(k)},PERMS.map(function(o){return h('option',{value:o,selected:E.vals[k]===o},o)}));
+    else if(k==='reviewDate')ctl=h('input',{class:'inp',id:id,maxlength:'2400',value:E.vals[k],placeholder:'e.g. 2026-12-01',onInput:bind(k)});
+    else ctl=h('textarea',{class:'inp',id:id,rows:'3',maxlength:'2400',value:E.vals[k],onInput:bind(k)});
+    form.appendChild(h('div',null,h('label',{for:id},FL[k]),ctl,k==='status'?h('div',{class:'hint'},'Testing needs Confirmed permission, a reviewer and a decision reference recorded.'):null));
+  });
+  if(E.error)form.appendChild(h('p',{class:'err',role:'alert',style:'margin:0'},E.error));
+  form.insertBefore(h('div',{class:'row edit-actions'},h('button',{class:'btn primary sm',type:'submit',disabled:S.busy},LIVE?'Save changes':'Save changes (demo)'),
+    h('button',{class:'btn ghost sm',type:'button',onClick:function(){if(canLeaveEdits())renderPanel()}},'Cancel')),form.firstChild);
+  return form;
+}
+function saveEdit(){
+  var i=idea(),E=S.edit,s=SECTIONS[E.section],patch={},n=0;
+  if(!i||E.ideaId!==i.id){S.edit=null;renderPanel();return}
+  if(s.title){var t=E.vals.title.trim();if(!t||t.length>180){E.error='A title needs 1–180 characters.';renderPanel();return}if(t!==i.title){patch.title=t;n++}}
+  else if(s.metrics){
+    var m={};
+    for(var x=0;x<METRICS.length;x++){var k=METRICS[x],raw=String(E.vals[k]).trim(),v=raw===''?null:Number(raw);
+      if(v!==null&&(!isFinite(v)||v<0)){E.error=ML[k][0]+' needs a non-negative number, or leave it empty.';renderPanel();return}
+      if((k==='coverage'||k==='uptake')&&v!==null&&v>100){E.error=ML[k][0]+' must be 0–100.';renderPanel();return}
+      if(k==='months'&&v!==null&&(v<=0||v>120)){E.error='The evaluation period must be more than 0 and at most 120 months.';renderPanel();return}
+      if(v!==i.metrics[k]){m[k]=v;n++}}
+    if(n)patch.metrics=m;
+  }else{
+    var f={};s.fields.forEach(function(k){if(E.vals[k]!==i.fields[k]){f[k]=E.vals[k];n++}});
+    var next=Object.assign({},i.fields,f);
+    if(next.status==='Testing'&&(next.permissions!=='Confirmed'||!next.reviewer.trim()||!next.approvalEvidence.trim())){E.error='Testing can only be recorded with Confirmed permission, a reviewer and a decision reference. Change the stage, or add those first.';renderPanel();return}
+    if(n)patch.fields=f;
+  }
+  if(!n){S.edit=null;renderPanel();return}
+  var hadDraft=!!i.draft;
+  mutate('updateIdea',{ideaId:i.id,patch:patch,revision:i.revision},'Edit saved to your Sheet').then(function(ok){
+    if(ok){if(hadDraft)S.setAside[i.id]=true;S.edit=null;renderAll()}
+  });
+}
+function forecastCard(i){
+  var f=i.forecast||{},row=function(l,v,suffix,neg){var t=num(v);return [h('span',null,l),h('span',{class:'v'+(t===null?' na':'')+(neg&&v<0?' neg':'')},t===null?'Not established':t+(suffix||''))]};
+  var roi=typeof f.roi==='number'?num(f.roi*100):null,missing=Array.isArray(f.missing)?f.missing:[];
+  return h('div',{class:'card sec forecast'},h('div',{class:'band'},h('span',{class:'k'},'Scenario forecast'),h('span',{class:'sp'}),h('span',{class:'meta'},'not a result')),
+    h('div',{class:'body'},
+      h('div',{class:'kv'},row('Covered tasks / month',f.coveredTasks),row('Gross hours / month',f.grossHours),row('Net hours / month',f.netHours,'',true),
+        row('Recurring cash / month',f.monthlyCash),row('Total evaluation cost',f.totalCost),row('Total financial benefit',f.totalBenefit),
+        [h('span',null,'Financial ROI'),h('span',{class:'v'+(roi===null?' na':'')+(f.roi<0?' neg':'')},roi===null?'Not established':roi+'%')]),
+      typeof f.netHours==='number'&&f.netHours<0?h('p',{class:'hint',style:'margin:0;color:var(--tb-decision)'},'Negative: in this scenario the change adds work rather than releasing time.'):null,
+      missing.length?h('p',{class:'hint',style:'margin:0'},'Still unknown: '+missing.map(function(k){return ML[k]?ML[k][0].toLowerCase():k}).join(', ')+'.'):null,
+      h('p',{class:'hint',style:'margin:0'},(f.label||'Scenario forecast.')+' Cash figures use whatever single currency you entered.')));
+}
+function pitchCard(i){
+  var ta;
+  return h('div',{class:'card sec'},h('div',{class:'band'},h('span',{class:'k',style:'color:var(--tb-soft)'},'Pitch draft'),h('span',{class:'sp'}),
+      h('button',{class:'btn ghost sm',onClick:function(){copyText(i.pitch||'')}},'Copy'),
+      h('button',{class:'btn ghost sm',onClick:function(){download(slug(i.title)+'-pitch.md',i.pitch||'','text/markdown')}},'Download')),
+    h('div',{class:'body'},h('p',{class:'hint',style:'margin:0'},'Built from your saved case. "Not yet established" marks gaps worth filling before you share it. A pitch does not grant permission to implement.'),
+      h('pre',{class:'pitch'},i.pitch||'')));
+}
+
+/* ---------- dialogs ---------- */
+var lastFocus=null;
+function openDialog(title,body,foot,onClose){
+  var d=$('dlg');clear(d);lastFocus=document.activeElement;
+  d.appendChild(h('div',{class:'dlg'},h('div',{class:'dlg-h'},h('h2',{id:'dlgTitle'},title),h('button',{class:'btn ghost sm',onClick:closeDialog},'Close')),
+    h('div',{class:'dlg-b'},body),foot?h('div',{class:'dlg-f'},foot):null));
+  d.onclose=function(){if(onClose)onClose();if(lastFocus&&lastFocus.focus)lastFocus.focus()};
+  if(d.showModal)d.showModal();else d.setAttribute('open','');
+  setTimeout(function(){var f=d.querySelector('.dlg-b .inp')||d.querySelector('.dlg-f .btn');if(f)f.focus()},0);
+}
+function closeDialog(){var d=$('dlg');if(d.open){if(d.close)d.close();else{d.removeAttribute('open');d.onclose&&d.onclose()}}}
+
+function disclosureBody(){
+  var st=S.ws&&S.ws.settings,e=st&&st.provider?prov(st.provider):null,name=e?e.label:'the AI service you choose';
+  return [h('p',null,'Each message you send is one request from this Sheet\'s script to ',h('strong',null,name),
+      e&&st.model?[' using model ',h('span',{class:'mono'},st.model)]:null,', with your own API key for that service. It includes:'),
+    h('ul',null,h('li',null,'Your saved context — company, role, goal, constraints and preferences'),
+      h('li',null,'The selected idea\'s saved fields and numbers'),h('li',null,'Up to 10 recent messages from this idea, including the one you\'re sending'),
+      h('li',null,'Titles and stages of up to 25 of your other ideas')),
+    st&&st.provider==='openrouter'?h('p',null,'OpenRouter is a router: it passes your request to a host that serves the model you picked, so that host receives the same content.'):null,
+    h('p',null,'Replies and suggestions are saved to the History tab. Anyone who can open this Sheet can read your records and conversation, so avoid confidential client details unless your company permits it.'),
+    h('p',{class:'hint'},'Switching services keeps the same Sheet records; you\'ll be asked to confirm again before the first message goes to a new service. Nothing is retried on another service or model automatically. Requests count toward your daily limit even if they fail.')];
+}
+function openDisclosure(thenSend){
+  var host=$('sendReview'),pid=S.ws.settings.provider,i=idea(),text=$('msg').value,preview={context:S.ws.context,
+    selectedIdea:i?{title:i.title,fields:i.fields,metrics:i.metrics}:null,
+    recentMessages:(i?i.messages:[]).slice(-9).map(function(m){return {role:m.role,text:m.text}}).concat(thenSend?[{role:'user',text:text}]:[]),
+    otherIdeas:S.ws.ideas.filter(function(x){return !i||x.id!==i.id}).slice(0,25).map(function(x){return {title:x.title,status:x.fields.status}})};
+  clear(host);$('log').hidden=true;document.querySelector('.composer').hidden=true;host.hidden=false;
+  function back(){host.hidden=true;$('log').hidden=false;document.querySelector('.composer').hidden=false;$('msg').focus()}
+  host.appendChild(h('section',{class:'card'},h('div',{class:'band'},h('span',{class:'k'},thenSend?'Review before sending':'What gets sent')),
+    h('div',{class:'body'},!LIVE?h('p',null,'Demonstration — nothing is sent.'):null,
+      h('p',null,'Destination: ',h('strong',null,pid?provLabel(pid):'Choose a provider in Settings'),pid?' · '+S.ws.settings.model:''),
+      h('label',null,thenSend?'Your pending message':'Text currently in the reply box'),h('pre',{class:'pitch'},text||'No message entered.'),
+      h('p',null,'The request also includes saved context, the selected case, recent conversation, and other idea titles/stages. Your key is not shown here.'),
+      h('details',null,h('summary',null,'Review the saved content included'),h('pre',null,JSON.stringify(preview,null,2))),
+      h('details',null,h('summary',null,'How requests and saved records work'),disclosureBody()),
+      pid==='openrouter'?h('p',null,'OpenRouter forwards this content to the host serving your chosen model.'):null,
+      h('div',{class:'row edit-actions'},h('button',{class:'btn',onClick:back},'Back to edit'),
+        thenSend&&LIVE?h('button',{class:'btn primary',onClick:function(){S.disclosedFor=pid;back();send()}},'Send to '+provLabel(pid)):null))));
+  host.querySelector('button').focus();
+}
+var PROVIDER_HELP={
+  gemini:'Uses a Gemini API key from Google AI Studio.',
+  anthropic:'Uses an Anthropic API key from the Claude Console — a Claude.ai login or subscription won\'t work here.',
+  openai:'Uses an OpenAI API key from the OpenAI platform for GPT models — a ChatGPT login or subscription won\'t work here.',
+  openrouter:'Uses an OpenRouter key. OpenRouter routes each request to a host for the model you choose. Model IDs look like vendor/model.',
+  kimi:'Uses an international Moonshot / Kimi API key. Regional or coding-plan credentials may differ and may not work with this backend.'
+};
+function openSettings(reason){
+  var st=S.ws.settings,u=S.ws.usage||{},list=Array.isArray(st.providers)?st.providers:[];
+  var D={provider:st.provider||'',choice:'',other:'',pick:'',catalog:{},catErr:'',catBusy:false,limit:String(st.maxCallsPerDay),ws:st.workspaceId||'',err:''};
+  var wrap=h('div',{class:'form'}),keyInput=null;
+  function entry(){for(var i=0;i<list.length;i++)if(list[i].id===D.provider)return list[i];return null}
+  function initModel(){var e=entry();D.choice='';D.other='';D.pick='';if(!e)return;
+    var saved=e.model||'',inS=(e.suggestions||[]).some(function(x){return x.id===saved});
+    if(inS)D.choice='s:'+saved;else if(saved){D.choice='other';D.other=saved}}
+  function model(){if(D.choice.slice(0,2)==='s:')return D.choice.slice(2);if(D.choice==='catalog')return D.pick;if(D.choice==='other')return D.other.trim();return ''}
+  function radio(val,label,code,extra){var id='s-m-'+val.replace(/[^a-z0-9]/gi,'_');
+    return h('div',{class:'opt'},h('input',{type:'radio',name:'s-model',id:id,value:val,checked:D.choice===val,onChange:function(){D.choice=val}}),
+      h('label',{for:id},label,code?h('span',{class:'code'},code):null),extra||null)}
+  function pickRadio(val){D.choice=val;var r=document.getElementById('s-m-'+val);if(r)r.checked=true}
+  initModel();
+  function draw(){
+    clear(wrap);var e=entry();
+    if(reason)wrap.appendChild(h('div',{class:'notice',style:'margin:0'},chip('Setup','decision',true),h('span',{class:'tx'},reason)));
+    if(!LIVE)wrap.appendChild(h('div',{class:'notice',style:'margin:0'},chip('Demo','decision',true),h('span',{class:'tx'},'Demonstration — no AI calls. You can try the choices, but keys can\'t be entered and no service is connected.')));
+    var sel=h('select',{class:'inp',id:'s-prov',onChange:function(ev){if(keyInput)keyInput.value='';keyInput=null;D.provider=ev.target.value;D.catErr='';D.err='';initModel();draw();var x=$('s-prov');x&&x.focus()}},
+      h('option',{value:'',selected:!D.provider,disabled:!!D.provider},'Choose your AI provider'),
+      list.map(function(p){return h('option',{value:p.id,selected:D.provider===p.id},p.label+(LIVE&&p.hasKey?' — key saved':''))}));
+    wrap.appendChild(h('div',null,h('label',{for:'s-prov'},'AI provider'),sel,
+      h('div',{class:'hint'},st.provider?'Active now: '+provLabel(st.provider)+' · '+st.model+'. A different choice takes effect only when you save.':'Nothing is active yet. Pick the service you have an API key for.')));
+    if(e){
+      var fs=h('fieldset',{class:'fs'},h('legend',{class:'lab'},'Model'));
+      (e.suggestions||[]).forEach(function(x){fs.appendChild(radio('s:'+x.id,x.label,x.id))});
+      var cat=D.catalog[e.id];
+      if(cat&&cat.models.length){
+        if(!D.pick)D.pick=cat.models[0].id;
+        fs.appendChild(radio('catalog','From '+e.label+'\'s catalog',null,h('select',{class:'inp mono','aria-label':'Catalog model',onChange:function(ev){D.pick=ev.target.value;pickRadio('catalog')}},
+          cat.models.map(function(m){return h('option',{value:m.id,selected:D.pick===m.id},m.label&&m.label!==m.id?m.id+' — '+m.label:m.id)}))));
+      }
+      fs.appendChild(radio('other','Other model ID',null,h('input',{class:'inp mono',id:'s-other','aria-label':'Other model ID',value:D.other,spellcheck:'false',
+        placeholder:e.id==='openrouter'?'vendor/model':'exact model ID',onInput:function(ev){D.other=ev.target.value;pickRadio('other')}})));
+      fs.appendChild(h('div',{class:'hint',style:'margin-top:6px'},'Suggestions checked '+(st.suggestionsCheckedAt||'recently')+'. They\'re starting points — not a guarantee of account access, price or compatibility.',
+        typeof e.docs==='string'&&/^https:\/\//.test(e.docs)?[' ',h('a',{href:e.docs,target:'_blank',rel:'noopener noreferrer'},'Model list')]:null));
+      var cs=null;
+      if(D.catBusy)cs=chip('Checking catalog','motion',true,true);
+      else if(D.catErr)cs=h('span',{class:'err'},D.catErr+' The suggestions above are still available.');
+      else if(cat)cs=h('span',{class:'hint',style:'margin:0'},cat.models.length+' models listed · checked '+fmtTime(cat.checkedAt)+(cat.hasMore?' · list may be incomplete':'')+'. '+(cat.note||''));
+      else if(!LIVE)cs=h('span',{class:'hint',style:'margin:0'},'Demonstration — catalog lookups are off.');
+      else if(!e.hasKey)cs=h('span',{class:'hint',style:'margin:0'},'Save a '+e.label+' key first to look up its model list.');
+      fs.appendChild(h('div',{class:'row',style:'margin-top:8px;align-items:flex-start'},h('button',{class:'btn sm',type:'button',disabled:!LIVE||!e.hasKey||D.catBusy||S.busy,onClick:refresh},'Refresh models'),h('div',{style:'flex:1;min-width:160px'},cs)));
+      wrap.appendChild(fs);
+      if(!keyInput)keyInput=h('input',{class:'inp mono',id:'s-key',type:'password',autocomplete:'off',spellcheck:'false',disabled:!LIVE,
+        placeholder:!LIVE?'Not available in the demonstration':e.hasKey?'Leave empty to keep the saved '+e.label+' key':'Paste your '+e.label+' API key'});
+      wrap.appendChild(h('div',null,h('label',{for:'s-key'},e.label+' API key'),
+        h('div',{class:'row',style:'margin-bottom:6px'},LIVE?(e.hasKey?chip('Key saved for '+e.label,'done',true):chip('No '+e.label+' key saved','decision',true)):chip('Demonstration — no keys','decision',true),
+          e.hasKey&&LIVE?h('button',{class:'btn danger sm',type:'button',disabled:S.busy,onClick:function(){delKey(e)}},'Delete this key'):null),
+        keyInput,h('div',{class:'hint'},PROVIDER_HELP[e.id]||'',' ',LIVE?'Stored privately in your Google account\'s script properties for this Sheet — not in the Sheet or this browser, and never shown again. Each service keeps its own key.':'')));
+      if(e.id==='anthropic')wrap.appendChild(h('details',{class:'adv',open:!!D.ws},h('summary',null,'Advanced: Anthropic workspace ID'),
+        h('label',{for:'s-ws',class:'sr'},'Anthropic workspace ID'),h('input',{class:'inp mono',id:'s-ws',value:D.ws,placeholder:'wrkspc_…',spellcheck:'false',onInput:function(ev){D.ws=ev.target.value}}),
+        h('div',{class:'hint'},'Only needed if your key requires a workspace header. Not a secret. Leave empty otherwise.')));
+    }
+    wrap.appendChild(h('div',null,h('label',{for:'s-lim'},'Daily request limit'),h('input',{class:'inp mono',id:'s-lim',type:'number',min:'1',max:'100',step:'1',value:D.limit,onInput:function(ev){D.limit=ev.target.value}}),
+      h('div',{class:'hint'},'One limit across all services. Today (UTC): '+(u.calls||0)+' requests'+(u.totalTokens?' · '+u.totalTokens.toLocaleString()+' tokens':'')+'. Resets at midnight UTC.')));
+    if(D.err)wrap.appendChild(h('p',{class:'err',role:'alert',style:'margin:0'},D.err));
+  }
+  function refresh(){
+    var e=entry();if(!e||S.busy)return;var prev=S.save;D.catBusy=true;D.catErr='';draw();setBusy(true,'Checking model list…');
+    call('getModels',{provider:e.id}).then(function(r){
+      if(!r||!Array.isArray(r.models)||r.provider!==e.id)throw new Error('The model list came back in an unexpected shape. Saved settings are unchanged.');
+      D.catalog[e.id]={models:r.models.filter(function(m){return m&&typeof m.id==='string'&&m.id}).map(function(m){return {id:m.id,label:String(m.label||'')}}),checkedAt:r.checkedAt,hasMore:!!r.hasMore,note:typeof r.note==='string'?r.note:''};
+      if(!D.catalog[e.id].models.length)D.catErr='The catalog returned no models matching this tool\'s filters.';
+    }).catch(function(err){D.catErr=err.message}).then(function(){D.catBusy=false;setBusy(false);S.save=prev;renderChrome();draw()});
+  }
+  function delKey(e){
+    if(!confirm('Delete the saved '+e.label+' key? Only this service is affected; other services\' keys stay as they are.'))return;
+    mutate('deleteKey',{provider:e.id},e.label+' key deleted').then(function(ok){if(ok){closeDialog();setTimeout(function(){openSettings()},0)}});
+  }
+  function save(){
+    var e=entry();D.err='';
+    if(!e){D.err='Choose your AI provider first.';draw();return}
+    var m=model();if(!m){D.err='Choose a model, or enter its exact ID under "Other model ID".';draw();return}
+    if(e.id==='openrouter'&&m.indexOf('/')<0){D.err='OpenRouter model IDs use vendor/model, for example '+((e.suggestions||[])[0]||{id:'vendor/model'}).id+'.';draw();return}
+    var n=Number(D.limit);if(!Number.isInteger(n)||n<1||n>100){D.err='Choose a daily limit from 1 to 100.';draw();return}
+    var p={provider:e.id,model:m,maxCallsPerDay:n},k=keyInput?keyInput.value.trim():'';if(k)p.apiKey=k;if(e.id==='anthropic')p.workspaceId=D.ws.trim();
+    if(keyInput)keyInput.value='';
+    mutate('saveSettings',p,'Settings saved').then(function(ok){
+      if(ok){closeDialog();if(reason)$('msg').focus()}
+      else{D.err=S.notice?S.notice.text:'Settings were not saved.';S.notice=null;renderNotice();if($('dlg').open)draw()}});
+  }
+  draw();
+  openDialog('Settings',wrap,[h('button',{class:'btn ghost',onClick:closeDialog},'Cancel'),h('button',{class:'btn primary',onClick:save},LIVE?'Save settings':'Save (demo only)')],
+    function(){if(keyInput)keyInput.value='';keyInput=null});
+}
+function openContext(){
+  var c=S.ws.context,labels={company:['Company or team','Who you work for, in a few words'],role:['Your role','What you do day to day'],goal:['What your team is trying to achieve','The outcome that matters most right now'],
+    constraints:['Constraints to respect','Policies, tools you can\'t use, budgets, timing'],preferences:['How you like to work','e.g. short questions, plain language, one thing at a time']},inputs={};
+  var body=h('div',{class:'form'},h('p',{class:'hint',style:'margin:0'},'Optional background the coach uses for every idea. All of it is sent with each message.'),
+    CONTEXT.map(function(k){inputs[k]=h('textarea',{class:'inp',id:'c-'+k,rows:'2',maxlength:'2400',value:c[k]||'',placeholder:labels[k][1]});return h('div',null,h('label',{for:'c-'+k},labels[k][0]),inputs[k])}));
+  openDialog('Your context',body,[h('button',{class:'btn ghost',onClick:closeDialog},'Cancel'),h('button',{class:'btn primary',onClick:function(){
+    var p={},n=0;CONTEXT.forEach(function(k){if(inputs[k].value!==(c[k]||'')){p[k]=inputs[k].value;n++}});
+    if(!n){closeDialog();return}mutate('setContext',p,'Context saved').then(function(ok){if(ok)closeDialog()});
+  }},LIVE?'Save context':'Save (demo only)')]);
+}
+function openNewIdea(){
+  if(!canLeaveEdits())return;
+  if(S.busy||!S.ws)return;
+  var t=h('input',{class:'inp',id:'n-title',maxlength:'180',placeholder:'e.g. Weekly report preparation'}),pr=h('textarea',{class:'inp',id:'n-prob',rows:'3',maxlength:'2400',placeholder:'Optional — a sentence about what gets in the way'}),err=h('p',{class:'err',style:'margin:0'});
+  function go(){var v=t.value.trim();if(!v){err.textContent='Give it a short working title — you can rename it later.';t.focus();return}
+    var oldId=S.ws.selectedId||'new',unsent=$('msg').value;
+    S.scrollNext=true;mutate('createIdea',{title:v,problem:pr.value},'Idea saved').then(function(ok){if(ok){S.view='chat';S.panel=false;S.topic=null;S.replyDrafts[oldId]=unsent;$('msg').value='';autosize();closeDialog();$('msg').focus()}else{err.textContent=S.notice?S.notice.text:'';}})}
+  openDialog('Start another idea',h('form',{class:'form',onSubmit:function(e){e.preventDefault();go()}},
+    h('p',{class:'hint',style:'margin:0'},'Your current ideas stay as they are. The new one becomes your focus.'),
+    h('div',null,h('label',{for:'n-title'},'Working title'),t),h('div',null,h('label',{for:'n-prob'},'What\'s the problem? (optional)'),pr),err),
+    [h('button',{class:'btn ghost',onClick:closeDialog},'Cancel'),h('button',{class:'btn primary',onClick:go},'Create idea')]);
+}
+function openDelete(i){
+  openDialog('Delete "'+i.title+'"?',[h('p',null,'This removes the case and its whole conversation from the active workbook — the Cases and History rows for this idea. Other ideas are not affected.'),
+    h('p',{class:'hint'},'There\'s no undo here. Export the workspace first if you might want it back.')],
+    [h('button',{class:'btn ghost',onClick:closeDialog},'Keep it'),h('button',{class:'btn danger',onClick:function(){
+      mutate('deleteIdea',{ideaId:i.id,revision:i.revision},'Idea deleted').then(function(ok){if(ok){S.tab='case';closeDialog()}})}},'Delete idea and conversation')]);
+}
+function openExport(){
+  var i=idea(),out=h('div');
+  openDialog('Export',[h('p',null,'Downloads are copies of what\'s saved'+(LIVE?' in your Sheet':' in this demonstration')+'. They never include your API key. Importing a file back isn\'t supported yet.'),
+    h('div',{class:'form'},
+      h('div',{class:'row'},h('button',{class:'btn',onClick:function(){
+        if(S.busy)return;setBusy(true,'Preparing export…');
+        call('exportWorkspace').then(function(d){var txt=JSON.stringify(d,null,2);S.save=LIVE?{kind:'saved',text:'Export ready'}:{kind:'demo',text:'Demo only · not saved'};
+          clear(out);var ok=download((LIVE?'make-the-case':'make-the-case-DEMO')+'-'+new Date().toISOString().slice(0,10)+'.json',txt,'application/json');
+          out.appendChild(h('p',{class:'hint'},ok?'If no download started, copy it from here:':'Download isn\'t available here. Copy it from here:'));
+          out.appendChild(h('textarea',{class:'inp mono',rows:'6',readonly:true,value:txt,'aria-label':'Workspace JSON'}));
+        }).catch(function(e){clear(out);out.appendChild(h('p',{class:'err'},e.message));S.save={kind:'error',text:'Export failed'}}).then(function(){setBusy(false)});
+      }},'Download workspace (JSON)'),h('span',{class:'hint'},'All ideas, history, context and settings (no key).')),
+      i?h('div',{class:'row'},h('button',{class:'btn',onClick:function(){download(slug(i.title)+'-pitch.md',i.pitch||'','text/markdown')}},'Download pitch (.md)'),
+        h('button',{class:'btn ghost',onClick:function(){copyText(i.pitch||'')}},'Copy pitch'),h('span',{class:'hint'},'For "'+i.title+'"')):null,
+      out)]);
+}
+function openMore(){
+  openDialog('More',h('div',{class:'form'},
+    h('button',{class:'btn',onClick:function(){closeDialog();setTimeout(openContext,0)}},'Your context'),
+    h('button',{class:'btn',onClick:function(){closeDialog();setTimeout(function(){openSettings()},0)}},'Settings'),
+    h('button',{class:'btn',onClick:function(){closeDialog();setTimeout(openExport,0)}},'Export')));
+}
+function openExample(){
+  openDialog('Example: Northstar (fictional)',[
+    h('p',null,'Jamie, a client services coordinator, had three ideas: weekly update preparation, repeated support questions, and conflicting account-status reports. All three were kept; one became the focus because it had a recurring output, a clear reviewer and a bounded place to try something.'),
+    h('p',null,'Through conversation, Jamie described how updates are prepared today, who checks them, and what would be left out (no automatic sends, no new commitments, no CRM write access). The coach suggested wording for each part; Jamie accepted some and corrected others.'),
+    h('p',null,'Jamie\'s rough timings — 80 updates a month, about 22 minutes each — went in as assumptions, not facts. The scenario showed about 4.4 hours a month released. When checking time was raised to 20 minutes, the scenario added work instead, and the next decision became "Revisit the approach".'),
+    h('p',null,'The ask: a four-week trial with two coordinators and an account lead, conditional on a tool and data review. Nothing was approved by the tool, and no savings were claimed.'),
+    h('p',{class:'hint'},'All people, companies, figures and results in this example are fictional.')],
+    [h('button',{class:'btn',onClick:function(){closeDialog();fill('Can you walk me through how this works using an example like mine? ')}},'Ask the coach for an example'),h('button',{class:'btn primary',onClick:closeDialog},'Back to my work')]);
+}
+
+/* ---------- utilities ---------- */
+function fill(t){var b=$('msg');if(S.busy)return;var cur=b.value;b.value=cur.trim()?cur.replace(/\s*$/,'')+'\n'+t:t;b.focus();b.setSelectionRange(b.value.length,b.value.length);autosize();updateCount()}
+function autosize(){var b=$('msg');b.style.height='auto';b.style.height=Math.min(200,Math.max(62,b.scrollHeight))+'px'}
+function slug(s){return String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60)||'case'}
+function download(name,text,type){
+  try{var url=URL.createObjectURL(new Blob([text],{type:type+';charset=utf-8'}));var a=h('a',{href:url,download:name,style:'display:none'});
+    document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url)},2000);announce('Download started: '+name);return true}catch(e){return false}
+}
+function copyText(t){
+  function fallback(){var ta=h('textarea',{value:t,style:'position:fixed;left:-9999px'});document.body.appendChild(ta);ta.select();var ok=false;try{ok=document.execCommand('copy')}catch(e){}ta.remove();announce(ok?'Copied':'Copy isn\'t available here — select the text and copy it manually.');setNotice('info',ok?'Pitch copied to the clipboard.':'Copy isn\'t available here — select the text in the Pitch tab and copy it manually.')}
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(function(){announce('Copied');setNotice('info','Pitch copied to the clipboard.')},fallback);else fallback();
+}
+
+/* ---------- wiring ---------- */
+$('msg').addEventListener('input',function(){autosize();updateCount()});
+$('msg').addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();send()}});
+$('sendBtn').addEventListener('click',function(){send()});
+[].forEach.call(document.querySelectorAll('[data-q]'),function(b){b.addEventListener('click',function(){
+  var q=b.getAttribute('data-q');
+  if(q==='dontknow')fill('I don\'t know. ');if(q==='correct')fill('That\'s not quite right. Actually, ');if(q==='example')fill('Could you give me an example of what you mean?');if(q==='another')openNewIdea();
+})});
+$('panelBtn').addEventListener('click',function(){if(!canLeaveEdits())return;S.panel=!S.panel;renderAll()});
+$('railBtn').addEventListener('click',function(){if(!canLeaveEdits())return;S.panel=false;S.view=S.view==='board'?'chat':'board';renderAll()});
+$('newIdeaBtn').addEventListener('click',openNewIdea);
+$('ctxBtn').addEventListener('click',openContext);
+$('setBtn').addEventListener('click',function(){openSettings()});
+$('expBtn').addEventListener('click',openExport);
+$('moreBtn').addEventListener('click',openMore);
+$('whatSent').addEventListener('click',function(){openDisclosure(false)});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&S.railOpen&&!$('dlg').open){S.railOpen=false;renderRail();$('railBtn').focus()}});
+window.addEventListener('beforeunload',function(e){if(S.busy||$('msg').value.trim()||hasUnsavedEdits()){e.preventDefault();e.returnValue=''}});
+
+/* ---------- demonstration backend (fictional, in memory, no network) ---------- */
+var Demo=(function(){
+  var today=new Date().toISOString().slice(0,10),t0=Date.now();
+  function at(minsAgo){return new Date(t0-minsAgo*60000).toISOString()}
+  function blank(id,title,problem,when){var f={},m={};FIELDS.forEach(function(k){f[k]=''});METRICS.forEach(function(k){m[k]=null});f.status='Exploring';f.permissions='Unknown';f.problem=problem||'';return {id:id,title:title,revision:1,updatedAt:when,fields:f,metrics:m}}
+  var a=blank('demo-1','Weekly client update preparation','',at(30));
+  Object.assign(a.fields,{status:'Developing',permissions:'Needs review',
+    problem:'Coordinators spend most of Monday assembling weekly client updates from three sources. Updates go out late and sometimes miss commitments made in calls.',
+    outcome:'Accurate, on-time updates without Monday overtime.',selectionReason:'Recurring output, a clear reviewer (the account lead), and a bounded place to try something.',
+    currentWork:'Coordinator copies notes from the CRM, call log and project tracker into a template, then the account lead edits and sends.',
+    proposedWork:'An approved AI tool prepares a first draft from permitted sources; a coordinator checks facts and missing commitments; the account lead approves and sends.',
+    exclusions:'No automatic sending, no new commitments, no CRM write access, no staffing changes.',
+    originator:'Jamie (client services coordinator)',businessOwner:'Account services lead',collaborators:'Two coordinators; Operations for measurement; IT/security for access review',
+    audiences:'Account leads, coordinators, clients receiving updates',baselineSource:'Jamie\'s own timing notes on six updates.',
+    assumptions:'80 updates/month and 22 minutes each are rough estimates from a small sample.',openQuestions:'Which sources is the tool allowed to read? Who signs off on the checking checklist?',
+    request:'A four-week trial with two coordinators and one account lead, conditional on tool and data review.'});
+  Object.assign(a.metrics,{volume:80,baselineMinutes:22,draftMinutes:6,reviewMinutes:8,coverage:80,uptake:75,supportHours:2,license:140,otherCost:0});
+  a.revision=4;
+  var b=blank('demo-2','Repeated support questions','The same five client questions arrive by email every week and each is answered from scratch.',at(60*26));b.revision=2;
+  var c=blank('demo-3','Conflicting account-status reports','Two teams report different status for the same accounts.',at(60*24*4));
+  Object.assign(c.fields,{status:'Parked',selectionReason:'Depends on shared definitions first; ordinary reporting may be a better starting point than AI.'});c.revision=3;
+  var st={context:{company:'Northstar (fictional)',role:'Client services coordinator',goal:'Accurate, timely client communication without overtime',constraints:'No CRM write access. Client sends stay with account leads.',preferences:'',selectedId:'demo-1'},
+    ideas:[a,b,c],settings:{provider:'',hasKey:false,model:'',maxCallsPerDay:20,workspaceId:'',suggestionsCheckedAt:'2026-10-28',providers:[
+      {id:'gemini',label:'Google Gemini',hasKey:false,model:'gemini-3.8-flash',docs:'https://ai.google.dev/gemini-api/docs/models',suggestions:[{id:'gemini-3.8-flash',label:'Gemini 3.8 Flash — general coaching'},{id:'gemini-3.5-flash-lite',label:'Gemini 3.5 Flash-Lite — lighter tasks'}]},
+      {id:'anthropic',label:'Anthropic / Claude',hasKey:false,model:'claude-sonnet-5-5',docs:'https://platform.claude.com/docs/en/models/overview',suggestions:[{id:'claude-sonnet-5-5',label:'Claude Sonnet 5.5 — general coaching'},{id:'claude-haiku-5-5',label:'Claude Haiku 5.5 — lighter tasks'},{id:'claude-opus-5-5',label:'Claude Opus 5.5 — deeper work'}]},
+      {id:'openai',label:'OpenAI / GPT models',hasKey:false,model:'gpt-6.1-sol',docs:'https://developers.openai.com/api/docs/models',suggestions:[{id:'gpt-6.1-sol',label:'GPT-6.1 Sol — general coaching'},{id:'gpt-6-luna',label:'GPT-6 Luna — lighter tasks'},{id:'gpt-6-astra',label:'GPT-6 Astra — deeper work'}]},
+      {id:'openrouter',label:'OpenRouter',hasKey:false,model:'openai/gpt-6.1-sol',docs:'https://openrouter.ai/models',suggestions:[{id:'openai/gpt-6.1-sol',label:'OpenAI GPT-6.1 Sol via OpenRouter'},{id:'moonshotai/kimi-k2.6',label:'Kimi K2.6 via OpenRouter'}]},
+      {id:'kimi',label:'Moonshot / Kimi',hasKey:false,model:'kimi-k2.6',docs:'https://www.kimi.ai/help/kimi-api/api-model-selection',suggestions:[{id:'kimi-k2.6',label:'Kimi K2.6 — general coaching'},{id:'kimi-k3',label:'Kimi K3 — deeper work'}]}]},
+    msgs:{'demo-1':[
+      {role:'user',text:'Every Monday I put together client updates. It takes forever and things still slip through.',at:at(48)},
+      {role:'assistant',text:'That sounds like a real, recurring cost — and the slipping-through part may matter more than the time. Walk me through one update: where does the information come from, and who sees it before it goes to the client?',at:at(47)},
+      {role:'user',text:'CRM notes, the call log and the project tracker. I paste it into a template and the account lead edits and sends it. Maybe 80 a month? Each takes me around 20–25 minutes.',at:at(40)},
+      {role:'assistant',text:'Thanks — that gives us a picture of today. I\'d treat 80 a month and roughly 22 minutes as working estimates until you\'ve timed a few more. One more thing that shapes what\'s possible: are you allowed to use an AI tool on CRM and call-log content, or is that something IT or security would need to look at?',at:at(39)}],
+      'demo-2':[{role:'user',text:'We get the same handful of questions by email all the time.',at:at(60*26)},{role:'assistant',text:'Worth keeping. Before it becomes a case, it would help to know how often each question arrives and what happens when the answer is wrong. Could you tally them for a week?',at:at(60*26-1)}],'demo-3':[]},
+    drafts:{'demo-1':{id:'demo-draft-1',baseRevision:4,fields:{openQuestions:'Which sources is the tool allowed to read? Who signs off on the checking checklist? Does IT/security need to review AI use on call-log content?',testPlan:'Four weeks, two coordinators: time each update and log every correction the reviewer makes.'},metrics:{months:1},
+      reason:'You said permission is unclear, so I\'ve added it as an open question rather than an assumption. The trial length and measurement approach come from what you described; the one-month evaluation period is a placeholder for you to confirm.'}}};
+  var replies=['(Scripted demonstration reply.) In the live tool the coach would reflect what you said and ask one useful question next — for example: what does the account lead most often correct before sending?',
+    '(Scripted demonstration reply.) If you don\'t know a number yet, that\'s fine — it stays "Not established" rather than zero. A good next step would be timing five real examples this week.',
+    '(Scripted demonstration reply.) This is where the coach would help you shape the ask: who would need to agree, what you\'d try first, and what would make you stop.'],n=0;
+
+  function forecast(i){var m=i.metrics,f=i.fields,req=['volume','baselineMinutes','draftMinutes','reviewMinutes','coverage','uptake','supportHours'];
+    var missing=req.filter(function(k){return m[k]===null}),tasks=missing.length?null:m.volume*m.coverage/100*m.uptake/100;
+    var gross=tasks===null?null:tasks*(m.baselineMinutes-m.draftMinutes-m.reviewMinutes)/60,net=gross===null?null:gross-m.supportHours;
+    var cash=m.license===null||m.otherCost===null?null:m.license+m.otherCost;
+    var cost=cash===null||['setupCash','setupHours','hourlyRate','supportHours','months'].some(function(k){return m[k]===null})?null:m.setupCash+m.setupHours*m.hourlyRate+m.months*(cash+m.supportHours*m.hourlyRate);
+    var benefit=m.months===null||m.monthlyBenefit===null?null:m.months*m.monthlyBenefit,roi=cost!==null&&cost>0&&benefit!==null?(benefit-cost)/cost:null,checks=[];
+    if(!f.problem.trim())checks.push('Describe a real problem or opportunity.');
+    if(!f.baselineSource.trim())checks.push('Record the baseline source or a plan to measure it.');
+    if(missing.length)checks.push('Establish these assumptions: '+missing.join(', ')+'.');
+    if(net!==null&&net<=0)checks.push('This scenario releases no net capacity. Revisit the approach or investigate a different benefit.');
+    if(f.permissions!=='Confirmed'||!f.reviewer.trim()||!f.approvalEvidence.trim())checks.push('Establish permission for the specific tool, data, and action before a live test.');
+    if(!f.businessOwner.trim())checks.push('Identify a proposed business owner and confirm their involvement.');
+    if(!f.quality.trim()||!f.testPlan.trim()||!f.stopRule.trim())checks.push('Define the investigation, quality requirements, and continue/adapt/stop conditions.');
+    var dec=f.permissions==='Not permitted'?'Resolve the recorded restriction':net!==null&&net<=0?'Revisit the approach':checks.length?'Develop the next request':'Prepare a bounded test request';
+    return {available:!missing.length,missing:missing,coveredTasks:tasks,grossHours:gross,netHours:net,monthlyCash:cash,totalCost:cost,totalBenefit:benefit,roi:roi,nextDecision:dec,checks:checks,label:'Scenario forecast. Capacity is not automatically cash savings.'}}
+  function pitch(cx,i){var f=i.fields,a=forecast(i),t=function(v){return String(v||'').trim()||'Not yet established'},nn=function(v){return v===null?'Not established':String(Math.round(v*100)/100)};
+    return '# '+i.title+'\n\nCompany/team: '+t(cx.company)+'\nCompany goal: '+t(cx.goal)+'\n\n## Decision requested\n'+t(f.request)+'\n\n## Problem and intended outcome\n'+t(f.problem)+'\n\n'+t(f.outcome)+
+    '\n\n## Scope\nToday: '+t(f.currentWork)+'\n\nProposed: '+t(f.proposedWork)+'\n\nOutside scope: '+t(f.exclusions)+'\n\n## People and support\nOriginator: '+t(f.originator)+'\nProposed owner: '+t(f.businessOwner)+'\nCollaborators: '+t(f.collaborators)+'\nAffected audiences: '+t(f.audiences)+'\nLearning and support: '+t(f.learning)+
+    '\n\n## Evidence and uncertainty\nBaseline: '+t(f.baselineSource)+'\nEvidence: '+t(f.evidence)+'\nAssumptions: '+t(f.assumptions)+'\nOpen questions: '+t(f.openQuestions)+
+    '\n\n## Scenario economics\nCovered tasks/month: '+nn(a.coveredTasks)+'\nNet hours/month after checking and support: '+nn(a.netHours)+'\nRecurring cash/month: '+nn(a.monthlyCash)+' in the currency used for the inputs.\nFinancial ROI: '+(a.roi===null?'Not established':nn(a.roi*100)+'%')+'\n'+a.label+
+    '\n\n## Evaluation\nInvestigation/test: '+t(f.testPlan)+'\nQuality: '+t(f.quality)+'\nContinue/adapt/stop: '+t(f.stopRule)+'\nReview date: '+t(f.reviewDate)+
+    '\n\n## Permissions and next step\n'+f.permissions+'\nReviewer: '+t(f.reviewer)+'\nDecision reference: '+t(f.approvalEvidence)+'\n'+a.nextDecision+'\n'+a.checks.map(function(v){return '- '+v}).join('\n')+'\nA pitch does not grant permission to implement.\n\n## Contribution and actual results\nContribution: '+t(f.contribution)+'\nActual results: '+t(f.actualResult)+'\nResult source: '+t(f.resultSource)+'\nConfirmed by: '+t(f.resultReviewer)+'\n\n(FICTIONAL DEMONSTRATION)\n'}
+  function view(i){var v=clone(i),ms=st.msgs[i.id]||[],d=st.drafts[i.id];v.messages=ms.slice(-40);v.messageCount=ms.length;v.draft=d&&d.baseRevision===i.revision?clone(d):null;v.forecast=forecast(i);v.pitch=pitch(st.context,i);return v}
+  function boot(){var sel=st.ideas.some(function(i){return i.id===st.context.selectedId})?st.context.selectedId:st.ideas.length?st.ideas[0].id:null;
+    return {schema:'tomboj.make-the-case.sheets.v1',version:'0.5.0',context:clone(st.context),selectedId:sel,ideas:st.ideas.map(view),settings:clone(st.settings),usage:{date:today,timezone:'UTC',calls:0,promptTokens:0,outputTokens:0,totalTokens:0}}}
+  function find(id){var i=st.ideas.filter(function(x){return x.id===id})[0];if(!i)throw new Error('This idea is no longer in the workspace. Reopen the tracker.');return i}
+  function rev(i,r){if(!Number.isInteger(r)||i.revision!==r)throw new Error('This case changed in another window. Reload it before saving.')}
+  function patch(i,p,ai){var o=clone(i);
+    if(p.title!==undefined){if(ai)throw new Error('The AI cannot rename an idea.');o.title=String(p.title).trim();if(!o.title)throw new Error('Give the idea a title.')}
+    Object.keys(p.fields||{}).forEach(function(k){if(FIELDS.indexOf(k)<0)throw new Error('Unsupported field: '+k);if(ai&&PROTECTED.indexOf(k)>=0)throw new Error('The AI cannot set '+k+'.');o.fields[k]=p.fields[k]});
+    Object.keys(p.metrics||{}).forEach(function(k){if(METRICS.indexOf(k)<0)throw new Error('Unsupported field: '+k);o.metrics[k]=p.metrics[k]});
+    if(o.fields.status==='Testing'&&(o.fields.permissions!=='Confirmed'||!o.fields.reviewer.trim()||!o.fields.approvalEvidence.trim()))throw new Error('Recording Testing requires confirmed permissions, a reviewer, and a decision reference.');
+    o.revision++;o.updatedAt=new Date().toISOString();return o}
+  function put(o){st.ideas=st.ideas.map(function(x){return x.id===o.id?o:x})}
+  function run(action,p){var i,d;
+    switch(action){
+      case 'bootstrap':case 'refresh':return boot();
+      case 'setContext':CONTEXT.forEach(function(k){if(p[k]!==undefined)st.context[k]=p[k]});return boot();
+      case 'createIdea':var id='demo-'+newId();st.ideas.push(blank(id,String(p.title).trim(),p.problem||'',new Date().toISOString()));st.msgs[id]=[];st.context.selectedId=id;return boot();
+      case 'selectIdea':find(p.ideaId);st.context.selectedId=p.ideaId;return boot();
+      case 'acceptDraft':i=find(p.ideaId);rev(i,p.revision);d=st.drafts[i.id];if(!d||d.id!==p.draftId||d.baseRevision!==i.revision)throw new Error('This draft is no longer current. Reopen the case and review the latest version.');put(patch(i,{fields:d.fields,metrics:d.metrics},true));return boot();
+      case 'reviewDraft':
+        i=find(p.ideaId);rev(i,p.revision);d=st.drafts[i.id];
+        if(!d||d.id!==p.draftId||d.baseRevision!==i.revision)throw new Error('This draft is no longer current. Reopen the case and review the latest version.');
+        var remaining=clone(d),chosen=0;
+        ['fields','metrics'].forEach(function(group){Object.keys(p[group]||{}).forEach(function(k){
+          if(!Object.prototype.hasOwnProperty.call(remaining[group],k))throw new Error('Choose a current suggestion.');
+          if(group==='metrics'&&p[group][k]!==null&&(!Number.isFinite(p[group][k])||p[group][k]<0||(['coverage','uptake'].indexOf(k)>=0&&p[group][k]>100)))throw new Error('Use a valid non-negative number.');
+          delete remaining[group][k];chosen++;
+        })});
+        (p.skip||[]).forEach(function(path){var a=path.split('.');if(a.length!==2||['fields','metrics'].indexOf(a[0])<0||!Object.prototype.hasOwnProperty.call(remaining[a[0]],a[1]))throw new Error('Choose a current suggestion.');delete remaining[a[0]][a[1]];chosen++});
+        if(!chosen)throw new Error('Choose a suggestion to save or skip.');
+        var reviewed=patch(i,{fields:p.fields||{},metrics:p.metrics||{}},true);put(reviewed);remaining.baseRevision=reviewed.revision;
+        st.drafts[i.id]=Object.keys(remaining.fields).length+Object.keys(remaining.metrics).length?remaining:null;return boot();
+      case 'updateIdea':i=find(p.ideaId);rev(i,p.revision);put(patch(i,p.patch,false));return boot();
+      case 'setBoard':i=find(p.ideaId);rev(i,p.revision);var moved=patch(i,{},false);moved.board={lane:p.lane,outcome:p.lane==='decisions'?(p.outcome||'awaiting'):'',reviewer:p.reviewer||'',reference:p.reference||'',note:p.note||''};if(moved.board.outcome==='approved'&&(!moved.board.reviewer.trim()||!moved.board.reference.trim()))throw new Error('Recording Approved needs a reviewer and decision reference.');if(st.drafts[i.id])st.drafts[i.id].baseRevision=moved.revision;put(moved);return boot();
+      case 'saveSettings':if(p.apiKey)throw new Error('Keys can\'t be entered in the demonstration.');
+        var pe=st.settings.providers.filter(function(x){return x.id===p.provider})[0];if(!pe)throw new Error('Choose Gemini, Claude, OpenAI, OpenRouter, or Kimi.');
+        if(!p.model)throw new Error('Enter a model ID for the selected provider, not a URL. OpenRouter IDs use vendor/model.');
+        if(!Number.isInteger(p.maxCallsPerDay)||p.maxCallsPerDay<1||p.maxCallsPerDay>100)throw new Error('Choose a daily request limit from 1 to 100.');
+        pe.model=p.model;st.settings.provider=pe.id;st.settings.model=p.model;st.settings.hasKey=false;st.settings.maxCallsPerDay=p.maxCallsPerDay;if(p.workspaceId!==undefined)st.settings.workspaceId=p.workspaceId;return boot();
+      case 'deleteKey':return boot();
+      case 'getModels':throw new Error('Demonstration — no AI calls. Model catalogs aren\'t looked up.');
+      case 'deleteIdea':i=find(p.ideaId);rev(i,p.revision);st.ideas=st.ideas.filter(function(x){return x.id!==i.id});delete st.msgs[i.id];delete st.drafts[i.id];if(st.context.selectedId===i.id)st.context.selectedId='';return boot();
+      case 'exportWorkspace':return {schema:'tomboj.make-the-case.sheets.v1',version:'0.5.0',exportedAt:new Date().toISOString(),demonstration:'FICTIONAL DEMONSTRATION DATA — not from a Google Sheet',context:clone(st.context),ideas:st.ideas.map(clone),history:[],settings:clone(st.settings),usage:boot().usage};
+      case 'chat':i=find(p.ideaId);var now=new Date().toISOString();(st.msgs[i.id]=st.msgs[i.id]||[]).push({role:'user',text:p.message,at:now});
+        st.msgs[i.id].push({role:'assistant',text:replies[n++%replies.length],at:new Date().toISOString()});delete st.drafts[i.id];
+        var v=view(i);return {idea:v,messages:v.messages,draft:v.draft,forecast:v.forecast,usage:boot().usage};
+      default:throw new Error('Unsupported action.');
+    }}
+  return {api:function(req){return new Promise(function(res){setTimeout(function(){try{res({ok:true,data:run(req.action,req.payload||{})})}catch(e){res({ok:false,error:e.message})}},req.action==='chat'?900:220)})}};
+})();
+
+/* APPROVED_DIALOGUE_START */
+/* Approved 0.5 dialogue layout. Embedded by build_coach_ui.py; not an Apps Script project file. */
+function renderAll(){
+  S.view=S.view||'chat';if(S.panel)S.view='case';else if(S.view==='case')S.view='chat';
+  renderChrome();renderRail();renderLog();renderPanel();renderProgress();renderNotice();
+}
+function renderChrome(){
+  renderChromeLegacy();var i=idea();clear($('focus'));$('focus').appendChild(h('strong',null,'Make the Case'));
+  $('panelBtn').textContent=S.panel?'Back to conversation':'My case';
+  $('railBtn').textContent=S.view==='board'?'Back to conversation':'Ideas';
+  $('newIdeaBtn').disabled=S.busy||!S.ws;
+  ['railBtn','panelBtn','moreBtn'].forEach(function(id){$(id).disabled=S.busy||!S.ws});
+  $('main').classList.toggle('view-board',S.view==='board');$('main').classList.toggle('view-case',S.view==='case');
+  $('main').classList.toggle('view-chat',S.view==='chat');
+  var nav=$('phaseNav');clear(nav);
+  ['Collect','Develop','Advance'].forEach(function(name,k){nav.appendChild(h('button',{class:'stage',disabled:S.busy||!S.ws,'aria-current':S.phase===k?'step':null,onClick:function(){choosePhase(k)}},h('span',{class:'stage-num'},'0'+(k+1)),name))});
+  nav.appendChild(h('button',{class:'text-link jump-link',disabled:S.busy||!S.ws,onClick:openTopics},'Jump to topic'));
+  $('composerLabel').textContent=i?'Your reply · '+i.title:'Your reply';
+  $('msg').placeholder='Tell me in your own words…';
+  $('sendBtn').textContent=S.busy?'Working…':'Send ↑';
+}
+function choosePhase(k){
+  if(!canLeaveEdits())return;S.phase=k;S.panel=false;S.view='chat';
+  var keys=[['problem','currentWork','outcome'],['proposedWork','businessOwner','baselineSource','testPlan','quality','stopRule'],['request','contribution']][k],i=idea();
+  var key=keys.find(function(x){return !i||!i.fields[x].trim()})||keys[0];
+  chooseTopic(key,k);
+}
+function chooseTopic(key,k){
+  if(!canLeaveEdits())return;
+  if(S.topic&&S.topic.key)S.replyDrafts['topic:'+S.topic.key]=$('msg').value;else S.replyDrafts[S.ws.selectedId||'new']=$('msg').value;
+  S.topic={key:key,label:FL[key],phase:k};S.phase=k;S.panel=false;S.view='chat';
+  $('msg').value=S.replyDrafts['topic:'+key]||'';S.scrollNext=true;renderAll();$('msg').focus();autosize();
+}
+function openTopics(){
+  if(!canLeaveEdits())return;
+  var body=h('div',{class:'form'}),groups=[['Collect',['problem','currentWork','outcome']],['Develop',['proposedWork','businessOwner','baselineSource','testPlan','quality','stopRule']],['Advance',['request','contribution']]];
+  groups.forEach(function(g,k){body.appendChild(h('h3',null,g[0]));g[1].forEach(function(key){body.appendChild(h('button',{class:'btn ghost',onClick:function(){closeDialog();chooseTopic(key,k)}},FL[key]))})});
+  openDialog('Choose what to work on',body);
+}
+function renderLog(){
+  var log=$('log'),composer=document.querySelector('.composer');composer.remove();clear(log);
+  var t=h('div',{class:'thread'});log.appendChild(t);
+  if(S.bootError){t.appendChild(h('p',{class:'err'},S.bootError));t.appendChild(h('button',{class:'btn',onClick:boot},'Reopen workspace'))}
+  else if(!S.ws)t.appendChild(h('p',null,'Opening your workspace…'));
+  else {
+    var i=idea(),messages=i?i.messages:[],lastAssistant=-1;
+    for(var x=messages.length-1;x>=0;x--)if(messages[x].role==='assistant'){lastAssistant=x;break}
+    var history=messages.slice();
+    if(!S.pending&&!S.topic&&lastAssistant>=0)history=messages.slice(0,lastAssistant);
+    if(history.length){var earlier=h('details',{class:'earlier'},h('summary',null,'Earlier conversation · '+history.length+' messages'));history.forEach(function(m){earlier.appendChild(message(m))});t.appendChild(earlier)}
+    var active=h('section',{id:'currentDialogue',class:'active-dialogue'});t.appendChild(active);
+    if(i)active.appendChild(h('div',{class:'working-idea'},'Working on: ',h('strong',null,i.title)));
+    if(S.pending&&(!i||S.pending.ideaId===i.id))active.appendChild(pendingCard());
+    else if(S.topic){active.appendChild(h('div',{class:'speaker'},['Collect','Develop','Advance'][S.topic.phase]+' · '+S.topic.label));active.appendChild(h('h1',{class:'question'},'What would you like to add or change about '+S.topic.label.toLowerCase()+'?'));active.appendChild(h('p',{class:'fine'},'Your next reply will ask the coach to focus on this topic. No request is sent until you choose Send.'));}
+    else if(lastAssistant>=0){active.appendChild(h('div',{class:'speaker'},LIVE?'Make the Case coach':'Coach · scripted demonstration'));active.appendChild(h('div',{class:'coach-reply'},messages[lastAssistant].text));}
+    else if(i&&Object.keys(i.fields).some(function(k){return !PROTECTED.includes(k)&&i.fields[k].trim()})){active.appendChild(h('div',{class:'speaker'},'Continue your idea'));active.appendChild(h('h1',{class:'question'},nextStep(i).question));}
+    else active.appendChild(opener(i));
+    var reviewing=i&&i.draft&&!S.topic&&!S.reviewLater?.[i.id]&&!(S.pending&&S.pending.ideaId===i.id);
+    if(reviewing)active.appendChild(draftCard(i));
+    composer.hidden=!!(reviewing||(S.pending&&S.pending.state==='sending'));
+  }
+  t.appendChild(composer);
+  if(!$('sendReview').hidden)composer.hidden=true;
+  if(S.scrollNext){S.scrollNext=false;requestAnimationFrame(function(){var a=$('currentDialogue');if(a)a.scrollIntoView({block:'start'});else $('main').scrollTop=0})}
+}
+function draftCard(i){
+  var d=i.draft,rows=Object.keys(d.fields).map(function(k){return {group:'fields',key:k,value:d.fields[k]}}).concat(Object.keys(d.metrics).map(function(k){return {group:'metrics',key:k,value:d.metrics[k]}}));
+  if(!rows.length)return h('span');
+  var r=rows[0],numeric=r.group==='metrics',label=numeric?ML[r.key][0]+' ('+ML[r.key][1]+')':FL[r.key],value=r.value===null?'':String(r.value);
+  if(!S.draftEdit||S.draftEdit.ideaId!==i.id||S.draftEdit.key!==r.key)S.draftEdit={ideaId:i.id,group:r.group,key:r.key,value:value,original:value};
+  var E=S.draftEdit,id='suggestion-'+r.key,ctl=h(numeric?'input':'textarea',{class:'inp',id:id,type:numeric?'number':null,min:numeric?'0':null,step:numeric?'any':null,rows:numeric?null:'3',maxlength:numeric?null:'2400',value:E.value,onInput:function(e){E.value=e.target.value}});
+  var card=h('section',{class:'review','aria-label':'Review the next suggested note'},h('p',{class:'fine'},rows.length+' proposed '+(rows.length===1?'note':'notes')+' to review. Save one at a time; other notes stay available.'),
+    d.reason?h('p',{class:'fine'},d.reason):null,
+    h('form',{class:'form',onSubmit:function(e){e.preventDefault();var v=numeric?(String(E.value).trim()===''?null:Number(E.value)):E.value;reviewOne(i,r.group,r.key,v,false)}},h('label',{for:id},label),ctl,
+      r.key==='openQuestions'?h('p',{class:'fine'},'Unresolved questions stay open. Recording them does not answer or verify them.'):null,
+      h('details',null,h('summary',null,'See the current saved value'),h('p',{class:'fine'},i[r.group][r.key]===null||i[r.group][r.key]===''?'Not added yet':String(i[r.group][r.key]))),
+      h('div',{class:'actions'},h('button',{class:'btn primary',type:'submit',disabled:S.busy},LIVE?'Save & continue':'Save & continue (demo)'),
+        h('button',{class:'btn ghost',type:'button',disabled:S.busy,onClick:function(){if(canLeaveEdits())reviewOne(i,r.group,r.key,null,true)}},'Skip this note'),
+        h('button',{class:'btn ghost',type:'button',onClick:function(){if(!canLeaveEdits())return;S.reviewLater=S.reviewLater||{};S.reviewLater[i.id]=true;renderAll();$('msg').focus()}},'Keep talking'))),
+    h('p',{class:'fine'},'These are working notes, not verified results or permission to implement. A new AI reply replaces the previous unaccepted draft.'));
+  return card;
+}
+function renderProgress(){
+  var panel=$('progressPanel');clear(panel);var i=idea();if(!i||S.view!=='chat')return;
+  var groups=[['Collect',['problem','currentWork','outcome']],['Develop',['proposedWork','businessOwner','baselineSource','testPlan','quality','stopRule']],['Advance',['request','contribution']]],all=groups.flatMap(function(g){return g[1]}),saved=all.filter(function(k){return i.fields[k].trim()});
+  panel.appendChild(h('h2',null,'Your case so far'));panel.appendChild(h('p',{class:'fine'},saved.length+' of '+all.length+' topics saved'));panel.appendChild(h('progress',{value:saved.length,max:all.length,'aria-label':'Topics with saved notes'}));
+  groups.forEach(function(g){var n=g[1].filter(function(k){return i.fields[k].trim()}).length;panel.appendChild(h('div',{class:'stage-count'},h('span',null,g[0]),h('span',null,n+' / '+g[1].length)))});
+  saved.slice(-2).forEach(function(k){panel.appendChild(h('section',{class:'saved-note'},h('h3',null,FL[k]),h('p',null,i.fields[k])))});
+  panel.appendChild(h('button',{class:'text-link',onClick:function(){if(!canLeaveEdits())return;S.panel=true;S.tab='case';renderAll()}},'View full case →'));
+  if(i.draft&&S.reviewLater?.[i.id])panel.appendChild(h('button',{class:'text-link',onClick:function(){if(!canLeaveEdits())return;delete S.reviewLater[i.id];S.topic=null;renderAll()}},'Review pending notes'));
+}
+var BOARD_LANES=[['collect','Collect'],['develop','Develop'],['advance','Advance'],['decisions','Decisions']];
+var BOARD_OUTCOMES=[['awaiting','Awaiting decision'],['approved','Approved'],['backlogged','Backlogged'],['not-pursuing','Not pursuing']];
+function boardOf(i){return i.board||{lane:{Exploring:'collect',Developing:'develop','Needs review':'advance',Testing:'advance',Parked:'decisions'}[i.fields.status]||'collect',outcome:i.fields.status==='Parked'?'backlogged':'',reviewer:'',reference:'',note:''}}
+function renderRail(){
+  var rail=$('rail');clear(rail);if(!S.ws)return;
+  rail.appendChild(h('div',{class:'board-heading'},h('div',null,h('h1',null,'Your ideas'),h('p',{class:'fine'},'Collect, develop, and take your ideas forward.')),h('button',{class:'btn primary',onClick:openNewIdea,disabled:S.busy},'＋ New idea')));
+  var board=h('div',{class:'kanban-board'});rail.appendChild(board);
+  BOARD_LANES.forEach(function(pair){var items=S.ws.ideas.filter(function(i){return boardOf(i).lane===pair[0]}),lane=h('section',{class:'kanban-column','aria-label':pair[1]+' ideas',onDragover:function(e){e.preventDefault()},onDrop:function(e){e.preventDefault();var i=S.ws.ideas.find(function(i){return i.id===e.dataTransfer.getData('text/plain')});if(i)moveBoard(i,pair[0])}});
+    lane.appendChild(h('h2',null,pair[1],h('span',{class:'column-count'},String(items.length))));
+    items.forEach(function(i){var b=boardOf(i),select=h('select',{'aria-label':'Move '+i.title,disabled:S.busy,onChange:function(e){if(e.target.value.startsWith('outcome:'))recordOutcome(i,e.target.value.slice(8));else moveBoard(i,e.target.value)}},BOARD_LANES.map(function(p){return h('option',{value:p[0],selected:b.lane===p[0]},p[1])}),h('optgroup',{label:'Record outcome'},BOARD_OUTCOMES.slice(1).map(function(p){return h('option',{value:'outcome:'+p[0]},p[1])})));
+      var card=h('article',{class:'kanban-card',draggable:!S.busy,onDragstart:function(e){e.dataTransfer.setData('text/plain',i.id)}},b.outcome?h('span',{class:'decision-tag'},(BOARD_OUTCOMES.find(function(p){return p[0]===b.outcome})||[])[1]):null,
+        h('button',{class:'board-title',disabled:S.busy,onClick:function(){selectIdea(i.id)}},i.title),h('p',{class:'card-snippet'},i.fields.problem||'An idea to explore.'),h('p',{class:'fine'},Object.keys(i.fields).filter(function(k){return !PROTECTED.includes(k)&&i.fields[k].trim()}).length+' saved notes'),select);
+      if(b.lane==='decisions')card.appendChild(h('button',{class:'text-link',disabled:S.busy,onClick:function(){recordOutcome(i,b.outcome||'awaiting')}},'Record outcome'));
+      lane.appendChild(card);
+    });
+    if(!items.length)lane.appendChild(h('p',{class:'fine'},pair[0]==='decisions'?'Awaiting decision, approved, backlogged, or not pursuing.':'Move an idea here when you’re ready.'));
+    board.appendChild(lane);
+  });
+  rail.appendChild(h('p',{class:'fine'},'Use Move to or drag a card. A recorded board outcome does not grant tool, data, or live-test permission.'));
+}
+function moveBoard(i,lane){
+  if(boardOf(i).lane===lane||!canLeaveEdits()||S.busy)return;
+  mutate('setBoard',{ideaId:i.id,revision:i.revision,lane:lane,outcome:lane==='decisions'?'awaiting':''},'Idea board saved');
+}
+function recordOutcome(i,outcome){
+  if(!canLeaveEdits())return;
+  var b=boardOf(i),selection=h('select',{class:'inp',id:'boardOutcome'},BOARD_OUTCOMES.map(function(o){return h('option',{value:o[0],selected:o[0]===outcome},o[1])})),reviewer=h('input',{class:'inp',id:'boardReviewer',value:b.reviewer}),ref=h('input',{class:'inp',id:'boardRef',value:b.reference}),note=h('textarea',{class:'inp',id:'boardNote',rows:'2',value:b.note}),error=h('p',{class:'err'});
+  openDialog('Record an outcome',h('div',{class:'form'},h('p',null,i.title+' — record a decision already made. The tool does not approve implementation.'),h('label',{for:'boardOutcome'},'Outcome'),selection,h('label',{for:'boardReviewer'},'Who approved or reviewed it? Required for Approved.'),reviewer,h('label',{for:'boardRef'},'Decision reference. Required for Approved.'),ref,h('label',{for:'boardNote'},'Reason or next review date (optional)'),note,error),[h('button',{class:'btn ghost',onClick:closeDialog},'Cancel'),h('button',{class:'btn primary',onClick:function(){if(selection.value==='approved'&&(!reviewer.value.trim()||!ref.value.trim())){error.textContent='Add the reviewer and decision reference before recording Approved.';return}mutate('setBoard',{ideaId:i.id,revision:i.revision,lane:'decisions',outcome:selection.value,reviewer:reviewer.value,reference:ref.value,note:note.value},'Outcome recorded').then(function(ok){if(ok)closeDialog();else error.textContent=S.notice?.text||'Not saved.'})}},'Save outcome')]);
+}
+function selectIdea(id){
+  if(!canLeaveEdits()||S.busy)return;
+  S.replyDrafts[S.ws.selectedId||'new']=$('msg').value;$('msg').value=S.replyDrafts[id]||'';S.view='chat';S.panel=false;S.topic=null;S.scrollNext=true;
+  if(id===S.ws.selectedId){renderAll();return}mutate('selectIdea',{ideaId:id},'Idea loaded');
+}
+function autosize(){var b=$('msg');b.style.height='auto';b.style.height=Math.min(140,Math.max(44,b.scrollHeight))+'px'}
+
+/* APPROVED_DIALOGUE_END */
+renderAll();
+boot();
+})();
+</script>
+</body>
+</html>

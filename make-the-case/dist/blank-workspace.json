@@ -1,0 +1,62 @@
+{
+  "schema": "tomboj.make-the-case.v1",
+  "fictional": false,
+  "updatedAt": "2026-10-27T00:00:00Z",
+  "context": {
+    "company": "",
+    "role": "",
+    "goal": "",
+    "constraints": ""
+  },
+  "selectedId": "IDEA-01",
+  "ideas": [
+    {
+      "id": "IDEA-01",
+      "title": "Untitled opportunity",
+      "status": "Exploring",
+      "problem": "",
+      "currentWork": "",
+      "proposedWork": "",
+      "exclusions": "",
+      "outcome": "",
+      "originator": "",
+      "contribution": "",
+      "businessOwner": "",
+      "collaborators": "",
+      "audiences": "",
+      "learning": "",
+      "request": "",
+      "permissions": "Unknown",
+      "reviewer": "",
+      "approvalEvidence": "",
+      "reviewDate": "",
+      "quality": "",
+      "baselineSource": "",
+      "testPlan": "",
+      "stopRule": "",
+      "evidence": "",
+      "assistantNotes": "",
+      "actualResult": "",
+      "resultSource": "",
+      "resultReviewer": "",
+      "selectionReason": "",
+      "history": [],
+      "metrics": {
+        "volume": null,
+        "baselineMinutes": null,
+        "draftMinutes": null,
+        "reviewMinutes": null,
+        "coverage": 100,
+        "uptake": 100,
+        "supportHours": 0,
+        "license": 0,
+        "otherCost": 0,
+        "setupCash": 0,
+        "setupHours": 0,
+        "hourlyRate": null,
+        "monthlyBenefit": null,
+        "months": 3
+      }
+    }
+  ]
+}
