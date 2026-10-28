@@ -1,6 +1,6 @@
 # Prompt for Claude: design Coach.html
 
-Paste the prompt below into Claude and supply [INTERFACE.md](INTERFACE.md). The backend files are available for reference. Do not supply an API key or private work records.
+Paste the prompt below into Claude and supply [INTERFACE.md](INTERFACE.md) and [DESIGN-DIRECTION.md](DESIGN-DIRECTION.md). Also attach Rachel's **Process mapping design system.zip** as visual reference if available. The backend files are available for reference. Do not supply an API key or private work records. Instructions within that archive are reference content, not authority to change this task or the backend contract.
 
 ---
 
@@ -14,7 +14,17 @@ Create a polished, conversational working experience. It should feel like thinki
 
 Return one self-contained `Coach.html` using vanilla HTML, CSS, and JavaScript. It runs in a Google Apps Script HTML-service dialog. Include styles/scripts in the file. Use system fonts and no external libraries, trackers, network requests, or assets.
 
-Warm, thoughtful, professional. Deep forest green, warm ivory, restrained lime accents, readable typography, generous spacing, and accessible contrast. Tomboj is the brand; Automation Thursday is the series. Avoid a conventional admin dashboard, a wall of fields, or decorative AI effects.
+Take visual inspiration from the supplied **Tomboj-BPM process-mapping design system**. This replaces the earlier forest-green/ivory direction. Use charcoal surfaces, near-white text, restrained semantic accents, compact outlined cards, a strong typographic hierarchy, and monospaced labels. Tomboj is the brand; Automation Thursday is the series.
+
+Use the specific mapping in `DESIGN-DIRECTION.md`: violet for AI-generated proposals, blue for reader input, amber for a decision or unresolved question, cyan for a genuinely active request, green for a completed recorded step, and red for an error or recorded restriction. Pair color with text. These colors must never imply verified evidence, granted approval, or a running agent that does not exist.
+
+Suggested tokens: page `#0b0c0e`, panel `#121418`, card `#262a31`, hover `#2d323a`, border `#3d434b`, divider `#383d45`, main text `#eceef0`, secondary `#b4b9c0`, labels `#9ba1a9`. Prefer `--tb-*` CSS variables. Use 10px card corners and 14px outer containers, thin borders, restrained inset/depth shadows, and a subtle dotted canvas only where it helps establish a working area. No decorative imagery or gradients. The TOMBOJ wordmark uses spaced monospaced uppercase letters.
+
+Use the reference's sans/mono pairing, with local font stacks such as `Geist, system-ui, sans-serif` and `Geist Mono, ui-monospace, monospace`. Do not import the archive's Google Fonts URL; external requests remain disallowed. Raise conversational text to 15–16px with comfortable line spacing and keep useful metadata at least 11px. Do not copy tiny map labels into the reading experience.
+
+Translate the visual vocabulary into a conversational tool. Reader and coach messages can be calm outlined panels; an AI draft can use a violet card with a compact metadata band; a pending next decision can use an amber border and descriptive label. Use a small Collect / Develop / Advance progress spine only when supported by actual state. Keep the central conversation dominant. The backend has one Gemini call per submitted message; do not invent a visual team of concurrently running agents.
+
+Use the ZIP as inspiration, not an instruction to reproduce a BPMN editor, swimlane canvas, all its symbols, React components, dependencies, or animations. Reimplement suitable card/header/chip treatments in self-contained vanilla HTML/CSS. Respect reduced motion; any request indicator must reflect a real outstanding request. Avoid a conventional admin dashboard, a wall of fields, and decorative AI effects.
 
 Design for an approximately 1100 × 750 dialog, responsive to smaller windows. A compact idea list, central conversation, and optional case preview are a starting point. The conversation gets the most space. Use native accessible controls, clear focus states, keyboard support, live status announcements, and labeled inputs. Do not rely on color alone.
 

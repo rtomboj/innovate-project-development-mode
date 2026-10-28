@@ -11,6 +11,7 @@ This is the reader-owned Automation Thursday edition. A bound Apps Script create
 - `appsscript.json`: minimal declared Google permissions and V8 runtime.
 - [Interface contract](INTERFACE.md): exact API, fields, response shapes, and loading/retry behavior for Claude.
 - [Claude design prompt](CLAUDE-DESIGN-PROMPT.md): reusable brief for the HTML file.
+- [Visual direction](DESIGN-DIRECTION.md): adaptation of Rachel's process-mapping design system for the conversational interface.
 - [Build and customization prompt](BUILD-PROMPT.md): instructions for readers who want to adapt the tool.
 
 ## Set up your own copy
@@ -18,7 +19,7 @@ This is the reader-owned Automation Thursday edition. A bound Apps Script create
 1. Create a **new, blank Google Sheet** in an account that permits Apps Script and the intended AI use.
 2. Choose **Extensions → Apps Script**. Replace the starter `Code.gs` with the supplied `Code.gs`, and add a script named `Core` with the supplied `Core.gs` contents. Files must be in the same Apps Script project.
 3. In the script editor's project settings, enable displaying the manifest. Replace `appsscript.json` with the supplied manifest.
-4. Add an HTML file named **Coach** and paste Claude's finished `Coach.html`. Supply Claude with [the design prompt](CLAUDE-DESIGN-PROMPT.md) and [the interface contract](INTERFACE.md). Keep the gateway unchanged.
+4. Add an HTML file named **Coach** and paste Claude's finished `Coach.html`. Supply Claude with [the design prompt](CLAUDE-DESIGN-PROMPT.md), [visual direction](DESIGN-DIRECTION.md), and [interface contract](INTERFACE.md). Keep the gateway unchanged.
 5. Save, select `setupWorkspace`, and run it once. Review Google's authorization screen. The declared permissions cover this spreadsheet, its interface, and external requests. The code contains no Gmail, Drive-wide, or company-system integration.
 6. Return to the Sheet and reload it. Choose **Make the Case → Open coach**.
 7. In the coach settings, enter your own Gemini API key and a model available to your account. The initial model suggestion is `gemini-3.8-flash`, from Google's model list checked October 27, 2026. Model access and pricing can change. The default limit is **20 attempted AI requests per UTC day**, editable from 1 to 100.
