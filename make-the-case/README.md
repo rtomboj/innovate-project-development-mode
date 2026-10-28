@@ -4,6 +4,8 @@
 
 Collect your ideas, develop one through a conversation, and prepare a specific next-step request. Keep the evidence, decisions, and your contribution as the work progresses. You do not have to build the solution yourself.
 
+**Looking for the original Innovate skill?** [Innovate](https://github.com/rtomboj/innovate-project-development-mode/blob/main/TombojInnovateSkill.md) guides project scoping, feasibility, build stages, and validation with Claude. **Make the Case** helps someone develop and pitch a workplace improvement. The Sheets kit runs independently of Innovate. [Compare the routes and review this branch](docs/reviewer-guide.md).
+
 **[Download the Google Sheets kit — v0.5.0](downloads/make-the-case-google-sheets-v0.5.0.zip)** · **[Start here](START-HERE.md)** · **[Update an existing copy](apps-script/UPDATE-AND-TEST.md)**
 
 This is an early-release, reader-owned kit. It uses your Google Sheet, its bound Apps Script, and your own permitted AI key. Setup requires pasting the supplied files; there is no one-click Google template or Tomboj-hosted account. See [release status and verification](STATUS.md).
@@ -11,6 +13,17 @@ This is an early-release, reader-owned kit. It uses your Google Sheet, its bound
 ![Make the Case: actual Coach file showing dialogue, progress, and the top New idea button](docs/images/coach-dialogue-v0.5.0.png)
 
 *Actual built Coach.html in its clearly labeled fictional demonstration. No AI call or Google Sheet write occurred in this capture.*
+
+**[See the five-view screenshot walkthrough](docs/example-gallery.md)** — conversation, editable suggestions, Kanban ideas, scenario numbers, and the pitch.
+
+## Choose where to begin
+
+| You want to… | Start with |
+| --- | --- |
+| Use the conversation coach in your own Google Sheet | [Download and setup guide](START-HERE.md) |
+| Understand what the experience and output look like | [Screenshot walkthrough](docs/example-gallery.md) |
+| Develop a case with an assistant using portable instructions | [Make the Case skill](skills/make-the-case/SKILL.md) — optional, separate from Innovate |
+| Review the branch, its scope, and remaining verification | [Reviewer guide](docs/reviewer-guide.md) |
 
 ## What you do
 
