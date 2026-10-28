@@ -3,7 +3,7 @@ from pathlib import Path
 import zipfile
 
 root = Path(__file__).resolve().parents[1]
-output = root.parent / 'outputs' / 'make-the-case-google-sheets-v0.4.0.zip'
+output = root.parent / 'outputs' / 'make-the-case-google-sheets-v0.5.0.zip'
 output.parent.mkdir(parents=True, exist_ok=True)
 files = sorted(p for p in (root / 'apps-script').rglob('*') if p.is_file())
 files += [root / 'LICENSE', root / 'ATTRIBUTIONS.md', root / 'STATUS.md', root / 'docs' / 'validation.md']

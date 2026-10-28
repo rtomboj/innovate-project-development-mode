@@ -38,3 +38,8 @@ ONB-10: after saving, closing, and reopening, the reader could not identify what
 ## Scope while testing continues
 
 Keep the findings open until the updated installation passes the walkthrough. The 0.4.0 source and kit include the fixes; this does not claim the installed Sheet has changed or that live behavior is verified.
+
+
+## 0.5.0 approved layout carried into Apps Script
+
+The user approved the cleaner dialogue direction, then requested the replacement scripts and a top New idea button. The new kit integrates inline conversation/review, a compact progress panel, Kanban, a stable app title, and global New idea with the real Google gateway. Empty/unchanged template slots no longer inflate proposal counts. Board decisions are separate from protected test permission and retain pending notes. 64 automated checks pass. Keep installed-account findings open until the updated Sheet completes its live walkthrough; a local build is not a live sign-off.

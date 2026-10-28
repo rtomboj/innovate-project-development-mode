@@ -193,6 +193,34 @@ test('customer-update case runs from conversation through review, reopening, eco
   assert.equal(JSON.stringify(out).includes(h.state.user.get('MTC_KEY_GEMINI')),false);assert.equal(h.state.requests.length,2);
 });
 
+test('full response templates omit blank and unchanged proposals without clearing known case values', () => {
+  const h=ready();h.configure();let i=h.create();
+  let r=h.call('updateIdea',{ideaId:i.id,revision:i.revision,patch:{fields:{outcome:'Keep customers informed'},metrics:{baselineMinutes:25}}});i=r.data.ideas[0];
+  const fields={},metrics={};h.sandbox.MTC.fields.filter(k=>!h.sandbox.MTC.protectedFields.includes(k)).forEach(k=>fields[k]='');h.sandbox.MTC.metrics.forEach(k=>metrics[k]=null);
+  fields.problem='A more precise problem';fields.outcome='Keep customers informed';metrics.baselineMinutes=25;metrics.license=0;
+  h.response({reply:'Which outcome should we measure?',draft:{fields,metrics,reason:'Only meaningful changes need review.'}});
+  r=h.call('chat',{ideaId:i.id,message:'Refine the problem; keep our outcome and timing.',requestId:'full-template'});assert.equal(r.ok,true,r.error);
+  assert.deepEqual(Object.keys(r.data.draft.fields),['problem']);assert.deepEqual(r.data.draft.metrics,{license:0});
+  r=h.call('acceptDraft',{ideaId:i.id,revision:i.revision,draftId:r.data.draft.id});assert.equal(r.ok,true,r.error);
+  assert.equal(r.data.ideas[0].fields.outcome,'Keep customers informed');assert.equal(r.data.ideas[0].metrics.baselineMinutes,25);
+});
+
+test('Kanban records persist across reopening, retain pending notes, and cannot grant test permission', () => {
+  const h=ready();h.configure();let i=h.create();h.response({reply:'What result matters?',draft:{fields:{outcome:'More reliable updates'},metrics:{},reason:'Reader supplied an intended outcome.'}});
+  let r=h.call('chat',{ideaId:i.id,message:'We want reliable updates.',requestId:'board-draft'});assert.equal(r.ok,true,r.error);
+  assert.equal(h.call('setBoard',{ideaId:i.id,revision:1,lane:'decisions',outcome:'approved'}).ok,false);
+  r=h.call('setBoard',{ideaId:i.id,revision:1,lane:'develop'});assert.equal(r.ok,true,r.error);i=r.data.ideas[0];
+  assert.equal(i.board.lane,'develop');assert.equal(i.draft.baseRevision,2);assert.equal(i.draft.fields.outcome,'More reliable updates');
+  const reopened=harness(h.state);i=reopened.boot().ideas[0];assert.equal(i.board.lane,'develop');
+  r=reopened.call('setBoard',{ideaId:i.id,revision:i.revision,lane:'decisions',outcome:'approved',reviewer:'Fictional sponsor',reference:'Fictional decision record',note:'Approval to investigate only.'});assert.equal(r.ok,true,r.error);i=r.data.ideas[0];
+  assert.equal(i.board.outcome,'approved');assert.equal(i.fields.permissions,'Unknown');assert.equal(i.fields.status,'Exploring');assert.ok(i.draft);assert.match(i.pitch,/Approval to investigate only/);
+  assert.equal(reopened.call('setBoard',{ideaId:i.id,revision:2,lane:'collect'}).ok,false);
+  assert.equal(reopened.call('setBoard',{ideaId:i.id,revision:i.revision,lane:'collect',fields:{permissions:'Confirmed'}}).ok,false);
+  assert.equal(reopened.call('updateIdea',{ideaId:i.id,revision:i.revision,patch:{fields:{status:'Testing'}}}).ok,false);
+  const exported=reopened.call('exportWorkspace');assert.ok(exported.data.history.some(e=>e.type==='board'&&e.data.board.outcome==='approved'));
+  assert.equal(h.state.requests.length,1);
+});
+
 test('AI cannot propose approval, actual results, credit, executable fields, or malformed numbers', () => {
   for (const draft of [ { fields: { permissions: 'Confirmed' }, metrics: {}, reason: '' }, { fields: { actualResult: 'Saved millions' }, metrics: {}, reason: '' }, { fields: { contribution: 'Built everything' }, metrics: {}, reason: '' }, { fields: { code: 'execute()' }, metrics: {}, reason: '' }, { fields: {}, metrics: { volume: '80' }, reason: '' } ]) {
     const h = ready(); h.configure(); const i = h.create(); h.response({ reply: 'A response', draft });

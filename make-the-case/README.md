@@ -6,7 +6,7 @@ Make the Case helps you develop an improvement, find the evidence and collaborat
 
 **[Google Sheets newsletter kit](apps-script/README.md)** · **[Claude HTML design prompt](apps-script/CLAUDE-DESIGN-PROMPT.md)** · **[See the fictional example](docs/northstar-example.md)** · **[Read the method](skills/make-the-case/SKILL.md)**
 
-The newsletter direction is a **reader-owned Google Sheet with an Apps Script conversation interface and the reader's own AI key**. Version 0.4.0 adds clearer resume guidance, individual suggestion review, scrolling/editing fixes, and a Start Here launcher to Claude's integrated [Coach.html](apps-script/Coach.html), with Gemini, Claude, OpenAI, OpenRouter, and Kimi adapters, keys, models, and suggestions. Local tests and browser demonstration checks pass; live Google-account/provider verification remains pending. The screenshot and hosted preview below show the earlier demonstration.
+The newsletter direction is a **reader-owned Google Sheet with an Apps Script conversation interface and the reader's own AI key**. Version 0.5.0 adds the approved dialogue layout, inline single-note review, a compact progress panel, Kanban outcomes, a top New idea action, and a Start Here launcher to Claude's integrated [Coach.html](apps-script/Coach.html), with Gemini, Claude, OpenAI, OpenRouter, and Kimi adapters, keys, models, and suggestions. Local tests and browser demonstration checks pass; live Google-account/provider verification remains pending. The screenshot and hosted preview below show the earlier demonstration.
 
 ![Checked fictional Northstar workspace](docs/images/workspace-desktop.jpg)
 
@@ -68,6 +68,6 @@ node scripts/check-package.mjs
 
 ## Status and evidence
 
-Version 0.1 is the earlier browser demonstration. Version 0.4.0 includes the conversational Sheets interface and five provider adapters, checked locally with live Google/account/provider checks pending. Northstar people, records, and outcomes are fictional. See [validation](docs/validation.md) for actual checks and limitations, [research](docs/research.md) for the desk-research basis, and [release status](STATUS.md) for delivery details. The newsletter itself is the public experiment; a separately recruited reader test is not a prerequisite.
+Version 0.1 is the earlier browser demonstration. Version 0.5.0 includes the conversational Sheets interface and five provider adapters, checked locally with live Google/account/provider checks pending. Northstar people, records, and outcomes are fictional. See [validation](docs/validation.md) for actual checks and limitations, [research](docs/research.md) for the desk-research basis, and [release status](STATUS.md) for delivery details. The newsletter itself is the public experiment; a separately recruited reader test is not a prerequisite.
 
 Created by Rachel Wilde / Tomboj. Original code and written materials are licensed under [MIT](LICENSE), except linked third-party sources and brand identifiers. [Attribution](ATTRIBUTIONS.md) explains provenance.

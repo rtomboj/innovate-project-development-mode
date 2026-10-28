@@ -110,6 +110,19 @@ function api(request) {
         mtcHistoryCapacity_(1, { patch: p.patch, revision: updated.revision });
         mtcSaveIdea_(updated); mtcHistory_(record.id, 'edited', '', 'Reader updated the case', { patch: p.patch, revision: updated.revision }, at);
         mtcRefreshViews_(); data = mtcBootstrap_(); break;
+      case 'setBoard':
+        mtcKeys_(p, ['ideaId', 'revision', 'lane', 'outcome', 'reviewer', 'reference', 'note']);
+        var boardIdea = mtcFindIdea_(p.ideaId); mtcRevision_(boardIdea, p.revision);
+        if (['collect', 'develop', 'advance', 'decisions'].indexOf(p.lane) < 0) throw new Error('Choose Collect, Develop, Advance, or Decisions.');
+        var boardRecord = { lane: p.lane, outcome: p.lane === 'decisions' ? (p.outcome || 'awaiting') : '', reviewer: mtcText_(p.reviewer || '', 200, 'Decision reviewer'), reference: mtcText_(p.reference || '', 500, 'Decision reference'), note: mtcText_(p.note || '', 1200, 'Decision note') };
+        if (p.lane === 'decisions' && ['awaiting', 'approved', 'backlogged', 'not-pursuing'].indexOf(boardRecord.outcome) < 0) throw new Error('Choose a valid recorded outcome.');
+        if (boardRecord.outcome === 'approved' && (!boardRecord.reviewer.trim() || !boardRecord.reference.trim())) throw new Error('Recording Approved needs who approved it and a decision reference.');
+        if (p.lane !== 'decisions') { boardRecord.reviewer = ''; boardRecord.reference = ''; boardRecord.note = ''; }
+        var carriedDraft = mtcDraft_(boardIdea, mtcHistoryRows_()), boardUpdated = mtcPatch_(boardIdea, {}, false, at);
+        if (carriedDraft) carriedDraft.baseRevision = boardUpdated.revision;
+        var boardEvent = { board: boardRecord, draft: carriedDraft, revision: boardUpdated.revision };
+        mtcHistoryCapacity_(1, boardEvent); mtcSaveIdea_(boardUpdated); mtcHistory_(boardIdea.id, 'board', '', 'Reader updated idea board', boardEvent, at);
+        mtcRefreshViews_(); data = mtcBootstrap_(); break;
       case 'saveSettings': data = mtcSaveSettings_(p); break;
       case 'getModels': data = mtcGetModels_(p); break;
       case 'deleteKey':
@@ -225,7 +238,7 @@ function mtcMessages_(id, history) {
       requestId: e.requestId, status: e.type === 'reply' ? 'saved' : replied[e.requestId] ? 'replied' : failed[e.requestId] ? 'failed' : 'unanswered' }; });
 }
 function mtcDraft_(idea, history) {
-  var entries = history.filter(function (e) { return e.ideaId === idea.id && (e.type === 'reply' || e.type === 'reviewed'); });
+  var entries = history.filter(function (e) { return e.ideaId === idea.id && (e.type === 'reply' || e.type === 'reviewed' || e.type === 'board'); });
   var latest = entries.length ? entries[entries.length - 1].data.draft : null;
   if (!latest || latest.baseRevision !== idea.revision) return null;
   // Validate stored model output again before exposing it as an actionable draft.
@@ -237,6 +250,9 @@ function mtcView_(idea, context, history) {
   var messages = mtcMessages_(idea.id, history);
   view.messages = messages.slice(-40); view.messageCount = messages.length;
   view.draft = mtcDraft_(idea, history); view.forecast = mtcForecast_(idea); view.pitch = mtcPitch_(context, idea);
+  var boardEvents = history.filter(function (e) { return e.ideaId === idea.id && e.type === 'board'; });
+  view.board = boardEvents.length ? boardEvents[boardEvents.length - 1].data.board : { lane: { Exploring: 'collect', Developing: 'develop', 'Needs review': 'advance', Testing: 'advance', Parked: 'decisions' }[idea.fields.status], outcome: idea.fields.status === 'Parked' ? 'backlogged' : '', reviewer: '', reference: '', note: '' };
+  if (view.board.outcome) view.pitch += '\n\n## Recorded board outcome\n' + view.board.outcome + '\nReviewer: ' + (view.board.reviewer || 'Not recorded') + '\nReference: ' + (view.board.reference || 'Not recorded') + '\n' + view.board.note + '\nThis records a reported decision; it does not grant tool, data, or live-test permission.\n';
   return view;
 }
 function mtcBootstrap_() {

@@ -1,6 +1,14 @@
 # Release status
 
-October 28, 2026. Sheets kit 0.4.0 and earlier browser demonstration 0.1.
+October 28, 2026. Sheets kit 0.5.0 and earlier browser demonstration 0.1.
+
+## Approved dialogue release: 0.5.0
+
+Rachel approved the redesigned web direction and requested the update scripts. The actual Sheets Coach now integrates the dialogue layout with the existing provider gateway, settings, request deduplication, error handling, calculations, and saved-case editing. It has a stable app header, selected-idea context inside the conversation, a top New idea button, a reply box immediately under the current work, one editable suggested note at a time, a compact read-only progress panel, and on-demand full-case views. Ideas is a Kanban board with explicit recorded outcomes. Empty/unchanged model template slots are filtered from review; AI blanks cannot wipe saved values.
+
+The new setBoard action saves revision-protected History events and rebases pending notes without losing them. Approved requires who approved it and a decision reference, and never sets Permission to test or Testing. Existing table headers and credential properties are unchanged. Readers replace Code.gs, Core.gs, and Coach.html in the existing bound project; Providers.gs and the manifest remain unchanged.
+
+64 automated checks pass. Browser checks on the actual built HTML confirm serial note review, the top New idea dialog and creation of an additional idea, and the request-processing view. The backend is tested with simulated Google/provider services; the upgraded installation still needs its real Google-dialog walkthrough. See apps-script/UPDATE-AND-TEST.md. The earlier approved design prototype is retained separately in web-preview/.
 
 ## Walkthrough fixes: 0.4.0
 

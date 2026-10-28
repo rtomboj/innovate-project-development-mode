@@ -1,7 +1,7 @@
 /* Pure record and calculation functions. No Google services or credentials here. */
 var MTC = {
   schema: 'tomboj.make-the-case.sheets.v1',
-  version: '0.4.0',
+  version: '0.5.0',
   fields: ['status', 'problem', 'outcome', 'currentWork', 'proposedWork', 'exclusions',
     'selectionReason', 'originator', 'businessOwner', 'collaborators', 'audiences', 'learning',
     'permissions', 'reviewer', 'approvalEvidence', 'baselineSource', 'evidence', 'assumptions',
@@ -146,8 +146,13 @@ function mtcValidateAI_(raw, idea, id, at) {
   var draft = null;
   if (raw.draft !== null && raw.draft !== undefined) {
     mtcKeys_(raw.draft, ['fields', 'metrics', 'reason']);
-    var fields = raw.draft.fields || {}, metrics = raw.draft.metrics || {};
-    mtcPatch_(idea, { fields: fields, metrics: metrics }, true, at);
+    var proposedFields = raw.draft.fields || {}, proposedMetrics = raw.draft.metrics || {};
+    mtcPatch_(idea, { fields: proposedFields, metrics: proposedMetrics }, true, at);
+    // Full response templates can contain every empty/unchanged slot. They are not changes.
+    // Clearing a known value is a deliberate reader edit, never an ambiguous model blank.
+    var fields = {}, metrics = {};
+    Object.keys(proposedFields).forEach(function (k) { if (proposedFields[k].trim() && proposedFields[k] !== idea.fields[k]) fields[k] = proposedFields[k]; });
+    Object.keys(proposedMetrics).forEach(function (k) { if (proposedMetrics[k] !== null && proposedMetrics[k] !== idea.metrics[k]) metrics[k] = proposedMetrics[k]; });
     if (Object.keys(fields).length || Object.keys(metrics).length) {
       draft = { id: id, baseRevision: idea.revision, fields: fields, metrics: metrics,
         reason: mtcText_(raw.draft.reason || '', 2000, 'Draft explanation') };

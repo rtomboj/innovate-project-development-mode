@@ -1,5 +1,12 @@
 # Validation record
 
+## Sheets kit 0.5.0 — approved dialogue integration
+
+64 automated checks pass. New backend tests reject empty/unchanged model-template proposals without clearing known case values; retain genuine zero inputs; record and reopen Kanban outcomes; retain pending drafts across board revision changes; reject missing approval references and stale board writes; and ensure a board outcome cannot grant Testing or tool/data permissions. Existing provider, key redaction, retry, economics, export, and record tests remain passing.
+
+The actual built Coach.html was opened locally, separately from the design-only prototype. Browser checks confirmed the stable app header, top New idea action and its dialog, creation of another idea without replacing the existing set, one-at-a-time note review progressing from three pending notes to two, and the processing state replacing the reply box. The exact .gs files execute in simulated tests; local browser demonstration responses are scripted. The final Google Sheet installation, real model response, OAuth identity behavior, and iframe downloads still require the installed-account walkthrough.
+
+
 ## Sheets kit 0.4.0 walkthrough fixes — October 28, 2026
 
 62 Node checks pass. New coverage executes the real Apps Script code with simulated Google services/provider responses: partial review validates chosen draft keys, preserves pending proposals across a fresh runtime, safely skips suggestions without altering saved values, rejects protected or stale changes, and includes reader edits in the pitch. A full customer-update scenario runs two conversations, accepts and edits suggestions, reopens, calculates 9.4 forecast hours/month with explicitly fictional inputs, produces a pitch with missing results/permissions visible, and exports records without the key. Additional checks exercise unsaved-edit cancellation, rule-based resume guidance, idempotent Start Here/button creation, and preservation of nonempty Sheet1/unrelated Start Here content.
