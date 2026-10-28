@@ -14,7 +14,12 @@ function harness(shared) {
     deleteProperty(key) { map.delete(key); return this; } });
   function sheet(name) {
     const data = [];
-    const s = { name, data, rows: 1000, cols: 26, getName: () => name,
+    const images = [];
+    const s = { name, data, rows: 1000, cols: 26, getName: () => s.name,
+      setName(n) { state.sheets.delete(s.name); s.name = n; state.sheets.set(n, s); return s; },
+      getLastColumn: () => Math.max(0, ...data.map(r => r.reduce((n, v, i) => v !== '' && v !== undefined ? i + 1 : n, 0))),
+      getImages: () => images, getDrawings: () => [], getCharts: () => [],
+      insertImage() { const img = { title: '', getAltTextTitle() { return this.title; }, setAltTextTitle(t) { this.title=t; return this; }, setAltTextDescription() { return this; }, assignScript(n) { this.script=n; return this; } }; images.push(img); return img; },
       getLastRow: () => data.reduce((last, row, i) => row?.some(v => v !== '' && v !== undefined) ? i + 1 : last, 0),
       getMaxRows: () => s.rows, getMaxColumns: () => s.cols,
       insertColumnsAfter: (_, count) => { s.cols += count; }, insertRowsAfter: (_, count) => { s.rows += count; },
@@ -32,17 +37,17 @@ function harness(shared) {
           },
           clearContent() { for (let r = 0; r < height; r++) for (let c = 0; c < width; c++) if (data[row + r - 1]) data[row + r - 1][col + c - 1] = ''; return range; },
           setBackground() { return range; }, setFontColor() { return range; }, setFontWeight() { return range; },
-          setWrap() { return range; }, setVerticalAlignment() { return range; }
+          setWrap() { return range; }, setVerticalAlignment() { return range; }, setFontSize() { return range; }
         }; return range;
       }
     }; return s;
   }
-  const book = { getSheetByName: name => state.sheets.get(name), insertSheet(name) { const s = sheet(name); state.sheets.set(name, s); return s; }, toast() {} };
+  const book = { getSheetByName: name => state.sheets.get(name), insertSheet(name) { const s = sheet(name); state.sheets.set(name, s); return s; }, toast() {}, setActiveSheet(s) { state.activeSheet=s.name; }, moveActiveSheet() {} };
   const sandbox = {
     console, PropertiesService: { getUserProperties: () => properties(state.user), getDocumentProperties: () => properties(state.document) },
-    SpreadsheetApp: { getActiveSpreadsheet: () => book },
+    SpreadsheetApp: { getActiveSpreadsheet: () => book, getUi: () => ({ createMenu() { const menu={addItem(){return menu;},addToUi(){}};return menu; } }) },
     LockService: { getDocumentLock: () => ({ tryLock: () => !state.busy, releaseLock() {} }) },
-    Utilities: { getUuid: () => 'test-id-' + (++state.nextId) },
+    Utilities: { getUuid: () => 'test-id-' + (++state.nextId), base64Decode: s => Buffer.from(s, 'base64'), newBlob: bytes => bytes },
     UrlFetchApp: { fetch(url, options) {
       state.requests.push({ url, options });
       const response = state.responses.shift();
@@ -62,11 +67,24 @@ function harness(shared) {
 function ready() { const h = harness(); h.sandbox.setupWorkspace(); return h; }
 const sampleMetrics = { volume: 80, baselineMinutes: 22, draftMinutes: 6, reviewMinutes: 8, coverage: 80, uptake: 75, supportHours: 2, license: 100, otherCost: 40, setupCash: 200, setupHours: 4, hourlyRate: 40, monthlyBenefit: null, months: 3 };
 
-test('setup creates five tables, preserves unrelated content, and can safely be rerun', () => {
+test('setup creates five tables and a Start Here page, and can safely be rerun', () => {
   const h = ready(); const i = h.create(); h.sandbox.setupWorkspace();
-  assert.equal(h.state.sheets.size, 5); assert.equal(h.boot().ideas[0].id, i.id);
+  assert.equal(h.state.sheets.size, 6); assert.equal(h.boot().ideas[0].id, i.id);
+  assert.equal(h.state.sheets.get('Start Here').getImages().length, 1);
+  assert.equal(h.state.sheets.get('Start Here').getImages()[0].script, 'showCoach');
   assert.equal(h.state.sheets.get('Context').getLastRow(), 7); // five context entries + selectedId + header
 });
+test('setup reuses empty Sheet1 but preserves nonempty Sheet1 and unrelated Start Here content', () => {
+  let h=harness(),book=h.sandbox.SpreadsheetApp.getActiveSpreadsheet();book.insertSheet('Sheet1');h.sandbox.setupWorkspace();
+  assert.equal(h.state.sheets.has('Sheet1'),false);assert.equal(h.state.sheets.has('Start Here'),true);
+  h=harness();book=h.sandbox.SpreadsheetApp.getActiveSpreadsheet();
+  book.insertSheet('Sheet1').getRange(1,1,1,1).setValues([['Keep my work']]);
+  book.insertSheet('Start Here').getRange(1,1,1,1).setValues([['Reader notes']]);h.sandbox.setupWorkspace();
+  assert.equal(h.state.sheets.get('Sheet1').data[0][0],'Keep my work');
+  assert.equal(h.state.sheets.get('Start Here').data[0][0],'Reader notes');
+  assert.equal(h.state.sheets.has('Make the Case - Start'),true);
+});
+
 test('setup refuses a conflicting existing tab before changing it', () => {
   const h = ready(); const s = h.state.sheets.get('Cases'); s.data[0][0] = 'Private records'; const before = JSON.stringify(s.data);
   assert.throws(() => h.sandbox.setupWorkspace(), /different headers/); assert.equal(JSON.stringify(s.data), before);
@@ -131,6 +149,50 @@ test('AI changes remain a separate draft until explicitly accepted', () => {
   const accepted = h.call('acceptDraft', { ideaId: i.id, draftId: r.data.draft.id, revision: 1 });
   assert.equal(accepted.ok, true, accepted.error); assert.equal(accepted.data.ideas[0].metrics.baselineMinutes, 22); assert.equal(accepted.data.ideas[0].draft, null);
 });
+test('selected suggestion edits preserve the other suggestions across reopening and never grant approval', () => {
+  const h = ready(); h.configure(); const i = h.create();
+  h.response({ reply: 'What outcome matters?', draft: { fields: { problem: 'Slow updates', outcome: 'Consistent updates', openQuestions: 'Confirm the review time' }, metrics: { volume: 52, baselineMinutes: 25 }, reason: 'Reader estimates.' } });
+  const chat = h.call('chat', { ideaId: i.id, message: 'Twelve weekly updates at 25 minutes each', requestId: 'partial-review' });
+  const id = chat.data.draft.id;
+  let r = h.call('reviewDraft', { ideaId: i.id, draftId: id, revision: 1, fields: { outcome: 'Fewer late customer updates' } });
+  assert.equal(r.ok, true, r.error);
+  let next = harness(h.state), saved = next.boot().ideas[0];
+  assert.equal(saved.fields.outcome, 'Fewer late customer updates');
+  assert.equal(saved.metrics.volume, null); assert.equal(saved.draft.metrics.volume, 52);
+  assert.equal(saved.draft.fields.outcome, undefined); assert.equal(saved.draft.baseRevision, 2);
+  assert.equal(saved.fields.permissions, 'Unknown'); assert.equal(saved.fields.status, 'Exploring');
+  assert.equal(next.call('reviewDraft', { ideaId: i.id, draftId: id, revision: 2, fields: { permissions: 'Confirmed' } }).ok, false);
+  assert.equal(next.call('reviewDraft', { ideaId: i.id, draftId: id, revision: 2, fields: { problem: 'Stale' }, skip: ['fields.problem'] }).ok, false);
+  r = next.call('reviewDraft', { ideaId: i.id, draftId: id, revision: 2, metrics: { volume: 48 }, skip: ['fields.openQuestions'] });
+  assert.equal(r.ok, true, r.error); saved = r.data.ideas[0];
+  assert.equal(saved.metrics.volume, 48); assert.equal(saved.fields.openQuestions, '');
+  assert.equal(saved.draft.fields.openQuestions, undefined); assert.equal(saved.draft.fields.problem, 'Slow updates');
+  assert.match(saved.pitch, /Fewer late customer updates/);
+  r = next.call('acceptDraft', { ideaId: i.id, draftId: id, revision: 3 });
+  assert.equal(r.ok, true, r.error); assert.equal(r.data.ideas[0].draft, null);
+  assert.equal(next.call('reviewDraft', { ideaId: i.id, draftId: id, revision: 3, metrics: { volume: 99 } }).ok, false);
+  assert.equal(next.boot().ideas[0].metrics.volume, 48);
+});
+
+test('customer-update case runs from conversation through review, reopening, economics, pitch and export', () => {
+  const h=ready();h.configure();const i=h.create('Customer status updates');
+  h.response({reply:'What customer outcome would matter?',draft:{fields:{problem:'Updates take too long',currentWork:'A person writes and reviews customer updates',assumptions:'12 weekly tasks and 25 minutes are fictional estimates; 52 per average month.'},metrics:{volume:52,baselineMinutes:25},reason:'Record the stated estimates.'}});
+  let r=h.call('chat',{ideaId:i.id,message:'I write 12 updates weekly, about 25 minutes each. These are estimates.',requestId:'flow-one'});
+  assert.equal(r.ok,true,r.error);r=h.call('acceptDraft',{ideaId:i.id,draftId:r.data.draft.id,revision:1});assert.equal(r.ok,true,r.error);
+  h.response({reply:'Who would review the investigation?',draft:{fields:{outcome:'More reliable, on-time customer updates',proposedWork:'An approved tool drafts; a person checks every fact and sends',businessOwner:'Proposed: account services lead; not yet confirmed',baselineSource:'Fictional self-estimate; time ten examples before testing',testPlan:'Measure ten fictional drafts and corrections',quality:'No missed commitments or unsupported facts',stopRule:'Stop if quality falls or checking consumes the gain',request:'Permission to investigate approved tooling and baseline measurements'},metrics:{draftMinutes:5,reviewMinutes:8,coverage:100,uptake:100,supportHours:1},reason:'Proposed scenario; no measured savings.'}});
+  r=h.call('chat',{ideaId:i.id,message:'Goal: reliable updates. Explore a draft workflow and measurement request; treat timings as assumptions.',requestId:'flow-two'});assert.equal(r.ok,true,r.error);
+  let item=r.data.idea;
+  r=h.call('reviewDraft',{ideaId:i.id,draftId:item.draft.id,revision:item.revision,fields:{outcome:'On-time customer updates with fewer missed commitments'}});assert.equal(r.ok,true,r.error);
+  const reopened=harness(h.state);item=reopened.boot().ideas[0];
+  assert.equal(item.fields.outcome,'On-time customer updates with fewer missed commitments');assert.equal(item.draft.metrics.reviewMinutes,8);
+  r=reopened.call('acceptDraft',{ideaId:i.id,draftId:item.draft.id,revision:item.revision});assert.equal(r.ok,true,r.error);item=r.data.ideas[0];
+  assert.ok(Math.abs(item.forecast.netHours-9.4)<1e-9);assert.equal(item.forecast.roi,null);
+  assert.match(item.pitch,/On-time customer updates with fewer missed commitments/);assert.match(item.pitch,/Permission to investigate/);assert.match(item.pitch,/Not yet established/);
+  assert.equal(item.fields.permissions,'Unknown');assert.equal(item.fields.actualResult,'');
+  const out=reopened.call('exportWorkspace');assert.equal(out.ok,true);assert.equal(out.data.ideas[0].id,i.id);assert.equal(out.data.history.filter(e=>e.type==='reply').length,2);
+  assert.equal(JSON.stringify(out).includes(h.state.user.get('MTC_KEY_GEMINI')),false);assert.equal(h.state.requests.length,2);
+});
+
 test('AI cannot propose approval, actual results, credit, executable fields, or malformed numbers', () => {
   for (const draft of [ { fields: { permissions: 'Confirmed' }, metrics: {}, reason: '' }, { fields: { actualResult: 'Saved millions' }, metrics: {}, reason: '' }, { fields: { contribution: 'Built everything' }, metrics: {}, reason: '' }, { fields: { code: 'execute()' }, metrics: {}, reason: '' }, { fields: {}, metrics: { volume: '80' }, reason: '' } ]) {
     const h = ready(); h.configure(); const i = h.create(); h.response({ reply: 'A response', draft });

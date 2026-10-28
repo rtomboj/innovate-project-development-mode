@@ -1,6 +1,6 @@
 # Coach.html integration contract
 
-Version 0.3.1 (additive to 0.3.0). All application calls go through `api({action, payload})`. The `.gs` files are authoritative. Claude's supplied HTML design is included with local integration fixes. Provider selection is explicit: Gemini, Claude, OpenAI, OpenRouter, or Kimi. See [the settings update prompt](CLAUDE-PROVIDER-UPDATE.md).
+Version 0.4.0 (additive reviewDraft action; record schema unchanged). All application calls go through `api({action, payload})`. The `.gs` files are authoritative. Claude's supplied HTML design is included with local integration fixes. Provider selection is explicit: Gemini, Claude, OpenAI, OpenRouter, or Kimi. See [the settings update prompt](CLAUDE-PROVIDER-UPDATE.md).
 
 ```js
 function call(action, payload = {}) {
@@ -40,7 +40,7 @@ All return values are JSON-safe. Do not call private helpers. Do not make direct
 ```json
 {
   "schema": "tomboj.make-the-case.sheets.v1",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "context": {"company":"", "role":"", "goal":"", "constraints":"", "preferences":"", "selectedId":"optional saved ID"},
   "selectedId": null,
   "ideas": [],
@@ -132,7 +132,7 @@ All start as `null` (unknown). Send a number or `null`, never an empty string or
 }
 ```
 
-Show the proposed changes and their current values. Accept sends the current idea revision and draft ID. Editing an idea invalidates the prior draft. A newer reply replaces the prior proposed draft. There is no discard action; users may leave a draft unaccepted or edit the case directly. A draft never changes records merely because a reply was generated.
+Show proposed changes alongside read-only current values, with visible per-item review actions. Accept sends the current idea revision and draft ID for all remaining suggestions. The additive `reviewDraft` action accepts `{ideaId, draftId, revision, fields?, metrics?, skip?}`. Fields/metrics must be a subset of keys present in the current draft, and may contain reader edits. Skip is an array of paths such as `fields.openQuestions` or `metrics.volume`; a key cannot be both saved and skipped. One revision-protected history entry records the review and remaining draft. Unreviewed suggestions are carried forward at the new revision and survive reopening; skipped proposals leave saved values unchanged. A separate `updateIdea` edit invalidates the prior draft, and a newer AI reply replaces it. A draft never changes records merely because a reply was generated. Protected AI fields remain excluded from reviewDraft.
 
 AI cannot set `status`, `permissions`, `reviewer`, `approvalEvidence`, `actualResult`, `resultSource`, `resultReviewer`, or `contribution`. Provide optional reader editing for these, preferably in the case/contribution panel rather than the opening conversation. It cannot rename ideas; the reader can. It can suggest narrative fields and metric assumptions for review.
 

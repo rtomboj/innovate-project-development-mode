@@ -2,7 +2,7 @@
 
 This is the reader-owned Automation Thursday edition. A bound Apps Script creates the tracker and persistent records in your Sheet. An HTML coach calls the script using your own key for Gemini, Claude, OpenAI, OpenRouter, or Kimi. The earlier hosted browser workspace remains a separate demonstration.
 
-**Current handoff:** Claude's supplied `Coach.html` is integrated with the current backend contract and included in this kit. Local review fixed missing action controls, incomplete-reply retry handling, and message-state labels. Automated and local browser checks are recorded in [validation](../docs/validation.md). Complete the real Google-account/provider checks below before distributing a verified template. No live Sheet, authorization flow, or live provider run is claimed.
+**Current handoff: 0.4.0.** The walkthrough fixes clipped case cards and unreachable editor controls, adds per-suggestion editing/saving, preserves other pending suggestions, replaces the nested send-warning popup with an inline content review, and shows Continue this idea on reopening. Setup adds a visible Start Here page with an Open coach button. [Update your existing Sheet and continue the end-to-end test](UPDATE-AND-TEST.md). Rachel's screenshots show an earlier-version live reply and reopening; the updated installation still needs its live walkthrough. Automated and local browser checks are recorded in [validation](../docs/validation.md).
 
 ## Files
 
@@ -19,12 +19,12 @@ This is the reader-owned Automation Thursday edition. A bound Apps Script create
 
 ## Set up your own copy
 
-1. Create a **new, blank Google Sheet** in an account that permits Apps Script and the intended AI use.
-2. Choose **Extensions → Apps Script**. Replace the starter `Code.gs` with the supplied `Code.gs`. Add scripts named `Core` and `Providers` with the supplied `Core.gs` and `Providers.gs`. All three must be in the same Apps Script project.
+1. Create a **new, blank Google Sheet** in an account that permits Apps Script and the intended AI use. Name it **Make the Case — My AI Opportunity Tracker** by clicking Untitled spreadsheet at the top left. For an existing installation, use [the update instructions](UPDATE-AND-TEST.md) instead.
+2. Choose **Extensions → Apps Script**. Name this separate project **Make the Case — Apps Script** by clicking Untitled project. Replace the starter `Code.gs` with the supplied `Code.gs`. Add scripts named `Core` and `Providers` with the supplied `Core.gs` and `Providers.gs`. All three must be in the same Apps Script project.
 3. In the script editor's project settings, enable displaying the manifest. Replace `appsscript.json` with the supplied manifest.
 4. Add an HTML file named **Coach** and paste the included `Coach.html`. For design changes, use [the design prompt](CLAUDE-DESIGN-PROMPT.md), [visual direction](DESIGN-DIRECTION.md), and [interface contract](INTERFACE.md). Keep the gateway unchanged.
 5. Save, select `setupWorkspace`, and run it once. Review Google's authorization screen. The declared permissions cover this spreadsheet, its interface, and external requests. The code contains no Gmail, Drive-wide, or company-system integration.
-6. Return to the Sheet and reload it. Choose **Make the Case → Open coach**.
+6. Return to the **Google Sheet browser tab** and reload it. Open **Start Here** and click the blue **Open coach** button. Alternatively, find **Make the Case** in the top menu row beside Help, then choose **Open coach**. This is in the spreadsheet, not the Apps Script Run dropdown. Use the same path whenever you close the coach; no deployment is needed.
 7. Choose an AI provider, a suggested or custom model, and your own key for that service. New copies start without a selected provider. Existing Gemini setups retain their configuration. Model suggestions were checked October 28, 2026; access, supported features, and pricing can change. Optional **Refresh models** retrieves a catalog using that provider's saved key, without sending case data. The default limit is **20 attempted AI requests per UTC day across all providers**, editable from 1 to 100.
 8. Begin with permitted or fictional information. Each AI request sends the saved company context, selected case, up to ten recent messages, and titles/stages of up to 25 other ideas to the selected service. OpenRouter routes the request to a model host. All ideas remain in your Sheet. The interface must explain the destination before the first request and again when changing services.
 
@@ -32,7 +32,9 @@ Each provider keeps its own key and remembered model in user properties. OpenAI 
 
 No public web-app deployment, Cloud Run server, or Tomboj-hosted account is required for this bound-dialog edition. You need a Google account that allows it and your own permitted AI access. An organization administrator can restrict scripts, authorization, or external services.
 
-## What the five tabs do
+## Start Here and the five record tabs
+
+Start Here is a visible entry point with an Open coach button and short returning-user instructions. Setup reuses the initial Sheet1 only if it has no cell content or images/drawings/charts. It preserves nonempty tabs and unrelated Start Here content, using Make the Case - Start when necessary. The button runs the bound showCoach function in desktop Google Sheets; the top menu remains an alternative.
 
 | Tab | Purpose |
 | --- | --- |
@@ -46,7 +48,7 @@ Use the coach for edits so changes have a revision and history. The two derived 
 
 ## Memory and control
 
-Memory is the saved context, case records, and conversation history. Closing and reopening the tool retrieves them. The selected case stays selected. Useful model summaries become a proposed draft; the reader reviews them before they become case inputs. Old messages are retained in History, while recent messages and accepted case fields supply subsequent AI context. This does not train or change the base model.
+Memory is the saved context, case records, and conversation history. Closing and reopening retrieves them and retains the selected case. Continue this idea shows pending suggestions and a rule-based next question about missing saved information. It does not call AI. Saving notes does not itself ask the coach another question: use Send reply to continue the conversation. Useful model summaries stay proposed until reviewed. Each proposal offers Use suggestion, Edit suggestion, Write my own, and Skip for now; saving one carries the others forward at the new revision. Skipping leaves the current saved value unchanged. A separate direct case edit sets aside the older draft, as disclosed in that editor. Old messages remain in History, while recent messages and accepted fields supply AI context. This does not train the base model.
 
 The reader can edit context, amend a case, delete a case with its messages/drafts, remove the API key, and download a JSON export. The export is a portable record, not a one-click restore format in this version. Use Google Sheets copies/version history for account-level backup. Deleting a case from this tool does not erase Google's version history or provider records.
 

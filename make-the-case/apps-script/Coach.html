@@ -21,6 +21,7 @@
   --tb-motion:oklch(.82 .1 210);--tb-done:oklch(.78 .11 155);--tb-safety:oklch(.78 .11 25);--glow-ai:0 0 22px oklch(.78 .11 300 / .16);
 }}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{height:100%;margin:0}
 body{background:var(--tb-page);color:var(--tb-ink);font:15px/1.55 var(--sans);-webkit-font-smoothing:antialiased;overflow:hidden}
 a{color:var(--tb-human)}a:hover{color:var(--tb-ink)}
@@ -160,7 +161,19 @@ header.top{display:flex;align-items:center;gap:14px;padding:0 16px;height:54px;b
 .tab{padding:7px 10px 8px;border:0;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;font-size:13.5px;color:var(--tb-muted);cursor:pointer;font-weight:500}
 .tab[aria-selected="true"]{color:var(--tb-ink);border-bottom-color:var(--tb-ink)}
 .tab:hover{color:var(--tb-ink)}
-.panel-body{flex:1;overflow:auto;padding:12px 12px 20px;background-image:radial-gradient(var(--tb-dot) 1px,transparent 1.2px);background-size:16px 16px;display:flex;flex-direction:column;gap:10px}
+.panel-body{flex:1;min-height:0;overflow:auto;padding:12px 12px 20px;background-image:radial-gradient(var(--tb-dot) 1px,transparent 1.2px);background-size:16px 16px;display:flex;flex-direction:column;gap:10px}
+.panel-body>.card{flex:0 0 auto}
+.panel-head,.tabs{flex-shrink:0}
+.edit-actions{position:sticky;top:0;z-index:2;background:var(--tb-surface);padding:10px 0;border-bottom:1px solid var(--tb-divider)}
+.composer-label{display:block;font-size:12px;color:var(--tb-soft);margin:0 0 5px}
+.resume{border-color:var(--tb-human)}
+.resume p{margin:0 0 10px}
+.suggestion-actions{margin-top:10px}
+.inline-review{margin-top:10px}
+.inline-review textarea{min-height:100px}
+.send-review{flex:1;min-height:0;overflow:auto;padding:18px}
+.send-review .card{max-width:720px;margin:0 auto}
+.send-review pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px}
 .sec{background:var(--tb-surface)}
 .sec .body{padding:8px 12px 12px;display:flex;flex-direction:column;gap:10px}
 .fld .fl{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--tb-muted);margin-bottom:2px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
@@ -262,19 +275,19 @@ dialog::backdrop{background:rgba(5,6,7,.72)}
   <div class="main" id="main">
     <nav class="rail" id="rail" aria-label="Your ideas"></nav>
     <section class="center" aria-label="Conversation">
+      <div id="sendReview" class="send-review" hidden></div>
       <div id="log" tabindex="-1" aria-live="polite" aria-relevant="additions"></div>
       <div class="composer">
         <div class="composer-in">
           <div id="notice"></div>
           <div class="box">
-            <label for="msg" class="sr">Message to the coach</label>
+            <label for="msg" class="composer-label" id="composerLabel">Start with your work or an idea</label>
             <textarea id="msg" rows="2" maxlength="4200" placeholder="Describe it in your own words. Rough is fine." autocomplete="off" spellcheck="true"></textarea>
             <div class="box-foot">
               <div class="quick" role="group" aria-label="Quick responses">
                 <button class="btn ghost sm" data-q="dontknow">I don't know</button>
                 <button class="btn ghost sm" data-q="correct">That's not quite right</button>
                 <button class="btn ghost sm" data-q="example">Give me an example</button>
-                <button class="btn ghost sm" data-q="another">Start another idea</button>
               </div>
               <span class="count" id="count" aria-live="off"></span>
               <button class="btn primary" id="sendBtn">Send</button>
@@ -360,7 +373,7 @@ function clone(o){return JSON.parse(JSON.stringify(o))}
 /* ---------- state ---------- */
 var LIVE=!!(window.google&&google.script&&google.script.run);
 var S={ws:null,bootError:null,busy:false,busyLabel:'',pending:null,notice:null,disclosedFor:null,
-  panel:window.innerWidth>1000,tab:'case',edit:null,save:{kind:'busy',text:'Opening…'},setAside:{},scrollNext:true,railOpen:false};
+  panel:window.innerWidth>1000,tab:'case',edit:null,draftEdit:null,replyDrafts:{},save:{kind:'busy',text:'Opening…'},setAside:{},scrollNext:true,railOpen:false};
 
 function prov(id){var l=S.ws&&S.ws.settings&&Array.isArray(S.ws.settings.providers)?S.ws.settings.providers:[];for(var i=0;i<l.length;i++)if(l[i].id===id)return l[i];return null}
 function provLabel(id){var p=prov(id);return p?p.label:(id||'No provider')}
@@ -433,6 +446,7 @@ function handleErr(e){
 /* ---------- chat ---------- */
 function send(fromRetry){
   if(S.busy||!S.ws)return;
+  if(hasUnsavedEdits()){setNotice('info','Save or cancel your edits before sending the next message.');return}
   var box=$('msg'),text=fromRetry?S.pending.message:box.value.trim();
   if(!text){box.focus();return}
   if(text.length>4000){setNotice('error','Messages can be up to 4,000 characters. This one is '+text.length.toLocaleString()+'. Shorten it or split it into two.');return}
@@ -463,6 +477,7 @@ function send(fromRetry){
       if(d.usage)S.ws.usage=d.usage;
       delete S.setAside[ideaId];
       if($('msg').value.trim()===S.pending.message)$('msg').value='';
+      autosize();
       S.pending=null;markSaved('Reply saved to your Sheet');S.scrollNext=true;
       announce(LIVE?'The coach replied.'+(d.draft?' It suggested changes for you to review.':''):'Scripted demo reply shown.');
     }).catch(function(e){
@@ -491,7 +506,9 @@ function renderChrome(){
   var pb=$('panelBtn');pb.setAttribute('aria-pressed',String(S.panel));pb.textContent=S.panel?'Hide case':'Show case';
   $('main').classList.toggle('no-panel',!S.panel);
   var send=$('sendBtn'),box=$('msg');
-  send.disabled=S.busy||!S.ws;send.textContent=S.busy&&S.pending&&S.pending.state==='sending'?'Waiting…':'Send';
+  send.disabled=S.busy||!S.ws;send.textContent=S.busy&&S.pending&&S.pending.state==='sending'?'Waiting…':i?'Send reply':'Start conversation';
+  $('composerLabel').textContent=i?'Reply to coach about: '+i.title:'Start with your work or an idea';
+  box.placeholder=i?'Answer the coach’s question or add information to this idea.':'Describe your work or an idea. Rough is fine.';
   box.readOnly=S.busy;box.setAttribute('aria-busy',String(S.busy));
   [].forEach.call(document.querySelectorAll('[data-q]'),function(b){b.disabled=S.busy||!S.ws});
   ['ctxBtn','setBtn','expBtn','moreBtn'].forEach(function(id){$(id).disabled=!S.ws});
@@ -527,6 +544,9 @@ function renderRail(){
 function selectIdea(id){
   S.railOpen=false;
   if(S.ws.selectedId===id){renderRail();return}
+  if(!canLeaveEdits())return;
+  S.replyDrafts[S.ws.selectedId||'new']=$('msg').value;
+  $('msg').value=S.replyDrafts[id]||'';autosize();
   S.edit=null;S.scrollNext=true;
   mutate('selectIdea',{ideaId:id},'Focus changed');
 }
@@ -551,6 +571,7 @@ function renderLog(){
   if(S.pending&&(!i||S.pending.ideaId===i.id))t.appendChild(pendingCard());
   if(i&&i.draft)t.appendChild(draftCard(i));
   else if(i&&S.setAside[i.id])t.appendChild(h('p',{class:'note'},'The earlier suggestion was set aside because you edited the case. Your edit is what\'s saved.'));
+  if(i)t.appendChild(continueCard(i));
   if(S.scrollNext){S.scrollNext=false;requestAnimationFrame(function(){log.scrollTop=log.scrollHeight})}
 }
 function opener(i){
@@ -591,11 +612,39 @@ function pendingCard(){
     h('div',{class:'band'},h('span',{class:'k'},head),h('span',{class:'sp'}),st==='sending'?h('span',{class:'dot c-motion pulse','aria-hidden':'true'}):null),
     h('div',{class:'body'},kids));
 }
+function nextStep(i){
+  var f=i.fields,m=i.metrics,steps=[
+    ['problem','What is not working today, and who experiences it?','What is not working today: '],
+    ['outcome','What business or customer outcome would make this worthwhile?','The outcome we want is: '],
+    ['currentWork','How does this work get done today?','Today the work happens like this: '],
+    ['proposedWork','What would change, and what would a person still check?','The proposed change is: '],
+    ['baselineSource','Where do the current numbers come from, or how could you measure them?','Our baseline evidence or measurement plan is: '],
+    ['businessOwner','Who should own the business outcome? This can be a proposed owner.','A proposed business owner is: '],
+    ['testPlan','What small investigation could test the idea before a wider rollout?','A small investigation could be: '],
+    ['quality','What quality checks would a successful trial need?','Good enough would mean: '],
+    ['stopRule','When would you continue, adapt, or stop?','We would continue, adapt, or stop when: '],
+    ['request','What decision or support are you asking for?','The decision or support I am asking for is: ']
+  ];
+  for(var x=0;x<steps.length;x++)if(!String(f[steps[x][0]]||'').trim())return {question:steps[x][1],prefix:steps[x][2]};
+  var required=['volume','baselineMinutes','draftMinutes','reviewMinutes','coverage','uptake','supportHours'];
+  for(var y=0;y<required.length;y++)if(m[required[y]]===null)return {question:'What is your estimate for '+ML[required[y]][0].toLowerCase()+'? Include its source, or say it is unknown.',prefix:ML[required[y]][0]+': '};
+  return {question:'Review your pitch draft and its open questions. Is the next request clear and supported?',prefix:'Help me review my pitch for gaps before I share it. '};
+}
+function continueCard(i){
+  var next=nextStep(i),count=i.draft?Object.keys(i.draft.fields).length+Object.keys(i.draft.metrics).length:0;
+  return h('section',{class:'card resume','aria-label':'Continue this idea'},
+    h('div',{class:'band'},h('span',{class:'k'},'Continue this idea')),
+    h('div',{class:'body'},h('p',null,count?'You have '+count+' suggestions awaiting review. Use or edit each above; you can keep talking while other suggestions remain.':LIVE?'Your saved case is loaded. Saving notes does not send another message to the coach.':'Your fictional case is ready to explore.'),
+      h('p',null,h('strong',null,'Next: '),next.question),
+      h('div',{class:'row'},h('button',{class:'btn primary sm',disabled:S.busy,onClick:function(){fill(next.prefix)}},'Answer next question'),
+        h('button',{class:'btn sm',disabled:S.busy,onClick:function(){if(!canLeaveEdits())return;S.panel=true;S.tab='pitch';renderAll()}},'View pitch draft')),
+      h('p',{class:'fine'},'Reply below to continue this idea. Use New idea in the ideas list for a separate opportunity. No AI request happens until you send.')));
+}
 function draftCard(i){
   var d=i.draft,stale=d.baseRevision!==i.revision,rows=[];
-  Object.keys(d.fields||{}).forEach(function(k){var cur=i.fields[k]||'';rows.push(change(FL[k]||k,cur||'Empty',!cur,d.fields[k]||'(clear this field)'))});
+  Object.keys(d.fields||{}).forEach(function(k){rows.push(suggestionRow(i,'fields',k,stale))});
   Object.keys(d.metrics||{}).forEach(function(k){var cur=num(i.metrics[k]),nv=num(d.metrics[k]),u=ML[k]?ML[k][1]:'';
-    rows.push(change(ML[k]?ML[k][0]:k,cur===null?'Not established':cur+' '+u,cur===null,nv===null?'Not established':nv+' '+u))});
+    rows.push(suggestionRow(i,'metrics',k,stale))});
   return h('section',{class:'card draft','aria-label':'Suggested changes awaiting your review'},
     h('div',{class:'band'},h('span',{class:'k'},'AI suggestion'),h('span',null,'· awaiting your review'),h('span',{class:'sp'}),h('span',{class:'meta'},rows.length+(rows.length===1?' change':' changes'))),
     h('div',{class:'body'},
@@ -603,13 +652,41 @@ function draftCard(i){
       rows,
       stale?h('p',{class:'err'},'This suggestion was based on an earlier version of the case and can no longer be accepted.'):null,
       h('div',{class:'row',style:'margin-top:12px'},
-        h('button',{class:'btn ai',disabled:S.busy||stale,onClick:function(){acceptDraft(i)}},LIVE?'Accept and save to my Sheet':'Accept (demo only)'),
-        h('button',{class:'btn ghost',disabled:S.busy,onClick:function(){editFromDraft(i)}},'Edit the case instead')),
+        h('button',{class:'btn ai',disabled:S.busy||stale,onClick:function(){if(canLeaveEdits())acceptDraft(i)}},LIVE?'Use all remaining suggestions':'Use all remaining (demo)')),
       h('p',{class:'fine'},'Nothing changes until you accept. Accepting records these as your working notes — it doesn\'t verify them, and it isn\'t approval from anyone at your company. You can also leave it and keep talking.')));
 }
 function change(label,now,nowEmpty,next){
   return h('div',{class:'change'},h('div',{class:'f'},label),
-    h('div',{class:'pair'},h('div',{class:'now'+(nowEmpty?' empty':'')},h('span',{class:'lbl'},'Now'),now),h('div',{class:'new'},h('span',{class:'lbl'},'Suggested'),next)));
+    h('div',{class:'pair'},h('div',{class:'now'+(nowEmpty?' empty':'')},h('span',{class:'lbl'},'Current answer · read only'),now),h('div',{class:'new'},h('span',{class:'lbl'},'AI suggestion · review below'),next)));
+}
+function suggestionRow(i,group,key,stale){
+  var numeric=group==='metrics',d=i.draft,label=numeric?ML[key][0]+' ('+ML[key][1]+')':FL[key],now=i[group][key],value=d[group][key];
+  var row=change(label,now===null||now===''?'Not added yet':String(now),now===null||now==='',value===null?'Unknown':value===''?'(clear this field)':String(value));
+  var editing=S.draftEdit&&S.draftEdit.ideaId===i.id&&S.draftEdit.group===group&&S.draftEdit.key===key;
+  if(key==='openQuestions')row.appendChild(h('p',{class:'hint'},'These are unresolved questions, not verified answers. Edit the list to keep track of what still needs an answer; reply to the coach below to work through one.'));
+  if(editing){
+    var E=S.draftEdit,id='suggestion-'+key,ctl=numeric?h('input',{class:'inp',id:id,type:'number',min:'0',step:'any',value:E.value,onInput:function(e){E.value=e.target.value}}):h('textarea',{class:'inp',id:id,rows:'4',maxlength:'2400',value:E.value,onInput:function(e){E.value=e.target.value}});
+    row.appendChild(h('form',{class:'form inline-review',onSubmit:function(e){e.preventDefault();var v=numeric?(String(E.value).trim()===''?null:Number(E.value)):E.value;reviewOne(i,group,key,v,false)}},
+      h('label',{for:id},'Your editable answer'),ctl,h('div',{class:'row'},
+        h('button',{class:'btn primary sm',type:'submit',disabled:S.busy||stale},LIVE?'Save this answer':'Save answer (demo)'),
+        h('button',{class:'btn ghost sm',type:'button',onClick:function(){if(canLeaveEdits()){S.draftEdit=null;renderLog()}}},'Cancel'))));
+  }else row.appendChild(h('div',{class:'row suggestion-actions'},
+    h('button',{class:'btn primary sm',disabled:S.busy||stale,onClick:function(){if(canLeaveEdits())reviewOne(i,group,key,value,false)}},'Use suggestion'),
+    h('button',{class:'btn sm',disabled:S.busy||stale,onClick:function(){startSuggestionEdit(i,group,key,value)}},'Edit suggestion'),
+    h('button',{class:'btn sm',disabled:S.busy||stale,onClick:function(){startSuggestionEdit(i,group,key,now===null?'':now)}},'Write my own'),
+    h('button',{class:'btn ghost sm',disabled:S.busy||stale,onClick:function(){if(canLeaveEdits())reviewOne(i,group,key,null,true)}},'Skip for now')));
+  return row;
+}
+function startSuggestionEdit(i,group,key,value){
+  if(!canLeaveEdits())return;
+  S.draftEdit={ideaId:i.id,group:group,key:key,value:value===null?'':String(value),original:value===null?'':String(value)};renderAll();
+  var el=$('suggestion-'+key);if(el)el.focus();
+}
+function reviewOne(i,group,key,value,skip){
+  if(group==='metrics'&&value!==null&&(!Number.isFinite(value)||value<0)){setNotice('error','Use a non-negative number, or leave it empty for unknown.');return}
+  var p={ideaId:i.id,draftId:i.draft.id,revision:i.revision,fields:{},metrics:{},skip:[]};
+  if(skip)p.skip.push(group+'.'+key);else p[group][key]=value;
+  mutate('reviewDraft',p,skip?'Suggestion skipped; saved answer unchanged':'Answer saved to your Sheet').then(function(ok){if(ok){S.draftEdit=null;renderAll()}});
 }
 function acceptDraft(i){mutate('acceptDraft',{ideaId:i.id,draftId:i.draft.id,revision:i.revision},'Suggestion saved to your Sheet')}
 function editFromDraft(i){
@@ -642,7 +719,7 @@ function renderPanel(){
   head.appendChild(h('div',{class:'hint',style:'margin:4px 0 0'},st==='Parked'?'Parked — kept for later.':'Stage: '+st+' · set by you in Your record'));
   var tabs=h('div',{class:'tabs',role:'tablist','aria-label':'Case views'});
   TABS.forEach(function(t){tabs.appendChild(h('button',{class:'tab',role:'tab',id:'tab-'+t[0],'aria-selected':S.tab===t[0]?'true':'false',tabindex:S.tab===t[0]?'0':'-1',
-    onClick:function(){S.tab=t[0];renderPanel()},onKeydown:tabKeys},t[1]))});
+    onClick:function(){if(!canLeaveEdits())return;S.tab=t[0];renderAll()},onKeydown:tabKeys},t[1]))});
   p.appendChild(tabs);
   var b=h('div',{class:'panel-body',role:'tabpanel','aria-labelledby':'tab-'+S.tab});p.appendChild(b);
   if(S.tab==='case'){b.appendChild(decisionCard(i));['purpose','work','people','evidence','next'].forEach(function(s){b.appendChild(section(i,s))})}
@@ -658,7 +735,7 @@ function renderPanel(){
 }
 function tabKeys(e){
   var ix=TABS.map(function(t){return t[0]}).indexOf(S.tab);
-  if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();ix=(ix+(e.key==='ArrowRight'?1:TABS.length-1))%TABS.length;S.tab=TABS[ix][0];renderPanel();$('tab-'+S.tab).focus()}
+  if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();if(!canLeaveEdits())return;ix=(ix+(e.key==='ArrowRight'?1:TABS.length-1))%TABS.length;S.tab=TABS[ix][0];renderAll();$('tab-'+S.tab).focus()}
 }
 function decisionCard(i){
   var f=i.forecast||{},checks=Array.isArray(f.checks)?f.checks:[];
@@ -669,7 +746,7 @@ function decisionCard(i){
 function section(i,key){
   var s=SECTIONS[key],editing=S.edit&&S.edit.ideaId===i.id&&S.edit.section===key;
   var band=h('div',{class:'band'},s.no?h('span',{class:'no'},s.no):null,h('span',{class:'k',style:'color:var(--tb-soft)'},s.band),h('span',{class:'sp'}),
-    editing?null:h('button',{class:'btn ghost sm',disabled:S.busy,'aria-label':'Edit '+s.band,onClick:function(){startEdit(key);renderPanel();focusEdit()}},'Edit'));
+    h('button',{class:'btn ghost sm',disabled:S.busy,'aria-label':(editing?'Close editor for ':'Edit ')+s.band,onClick:function(){if(editing){if(canLeaveEdits())renderAll()}else if(startEdit(key)){renderAll();focusEdit()}}},editing?'Close editor':'Edit'));
   var body=h('div',{class:'body'});
   if(editing)body.appendChild(editForm(i,key));
   else if(s.title)body.appendChild(fld('Title',i.title));
@@ -685,9 +762,15 @@ function fld(label,val,tag,emptyText){
   return h('div',{class:'fld'},h('div',{class:'fl'},label,tag),h('div',{class:'fv'+(empty?' empty':'')},empty?(emptyText||'Not yet established'):val));
 }
 function startEdit(key){
+  if(!canLeaveEdits())return false;
   var i=idea(),s=SECTIONS[key],vals={};
   if(s.title)vals.title=i.title;else if(s.metrics)METRICS.forEach(function(k){vals[k]=i.metrics[k]===null?'':String(i.metrics[k])});else s.fields.forEach(function(k){vals[k]=i.fields[k]});
-  S.edit={ideaId:i.id,section:key,vals:vals,error:''};
+  S.edit={ideaId:i.id,section:key,vals:vals,original:JSON.stringify(vals),error:''};return true;
+}
+function hasUnsavedEdits(){return !!((S.edit&&JSON.stringify(S.edit.vals)!==S.edit.original)||(S.draftEdit&&S.draftEdit.value!==S.draftEdit.original))}
+function canLeaveEdits(){
+  if(hasUnsavedEdits()&&!window.confirm('You have unsaved edits. Discard them and continue? Cancel to keep editing.'))return false;
+  S.edit=null;S.draftEdit=null;return true;
 }
 function focusEdit(){setTimeout(function(){var el=document.querySelector('#panel .form .inp');if(el)el.focus()},0)}
 function editForm(i,key){
@@ -708,8 +791,8 @@ function editForm(i,key){
     form.appendChild(h('div',null,h('label',{for:id},FL[k]),ctl,k==='status'?h('div',{class:'hint'},'Testing needs Confirmed permission, a reviewer and a decision reference recorded.'):null));
   });
   if(E.error)form.appendChild(h('p',{class:'err',role:'alert',style:'margin:0'},E.error));
-  form.appendChild(h('div',{class:'row'},h('button',{class:'btn primary sm',type:'submit',disabled:S.busy},LIVE?'Save to my Sheet':'Save (demo only)'),
-    h('button',{class:'btn ghost sm',type:'button',onClick:function(){S.edit=null;renderPanel()}},'Cancel')));
+  form.insertBefore(h('div',{class:'row edit-actions'},h('button',{class:'btn primary sm',type:'submit',disabled:S.busy},LIVE?'Save changes':'Save changes (demo)'),
+    h('button',{class:'btn ghost sm',type:'button',onClick:function(){if(canLeaveEdits())renderPanel()}},'Cancel')),form.firstChild);
   return form;
 }
 function saveEdit(){
@@ -781,10 +864,23 @@ function disclosureBody(){
     h('p',{class:'hint'},'Switching services keeps the same Sheet records; you\'ll be asked to confirm again before the first message goes to a new service. Nothing is retried on another service or model automatically. Requests count toward your daily limit even if they fail.')];
 }
 function openDisclosure(thenSend){
-  if(!LIVE){openDialog('What gets sent',[h('p',null,'Demonstration — no AI calls. Nothing is sent anywhere. In the live tool:')].concat(disclosureBody()));return}
-  var pid=S.ws.settings.provider,first=thenSend&&S.disclosedFor===null;
-  openDialog(thenSend?(first?'Before your first message':'Sending to a different service'):'What gets sent',disclosureBody(),thenSend?[h('button',{class:'btn ghost',onClick:closeDialog},'Not now'),
-    h('button',{class:'btn primary',onClick:function(){S.disclosedFor=pid;closeDialog();send()}},'Send to '+provLabel(pid))]:[h('button',{class:'btn',onClick:function(){if(pid)S.disclosedFor=pid;closeDialog()}},'Got it')]);
+  var host=$('sendReview'),pid=S.ws.settings.provider,i=idea(),text=$('msg').value,preview={context:S.ws.context,
+    selectedIdea:i?{title:i.title,fields:i.fields,metrics:i.metrics}:null,
+    recentMessages:(i?i.messages:[]).slice(-9).map(function(m){return {role:m.role,text:m.text}}).concat(thenSend?[{role:'user',text:text}]:[]),
+    otherIdeas:S.ws.ideas.filter(function(x){return !i||x.id!==i.id}).slice(0,25).map(function(x){return {title:x.title,status:x.fields.status}})};
+  clear(host);$('log').hidden=true;document.querySelector('.composer').hidden=true;host.hidden=false;
+  function back(){host.hidden=true;$('log').hidden=false;document.querySelector('.composer').hidden=false;$('msg').focus()}
+  host.appendChild(h('section',{class:'card'},h('div',{class:'band'},h('span',{class:'k'},thenSend?'Review before sending':'What gets sent')),
+    h('div',{class:'body'},!LIVE?h('p',null,'Demonstration — nothing is sent.'):null,
+      h('p',null,'Destination: ',h('strong',null,pid?provLabel(pid):'Choose a provider in Settings'),pid?' · '+S.ws.settings.model:''),
+      h('label',null,thenSend?'Your pending message':'Text currently in the reply box'),h('pre',{class:'pitch'},text||'No message entered.'),
+      h('p',null,'The request also includes saved context, the selected case, recent conversation, and other idea titles/stages. Your key is not shown here.'),
+      h('details',null,h('summary',null,'Review the saved content included'),h('pre',null,JSON.stringify(preview,null,2))),
+      h('details',null,h('summary',null,'How requests and saved records work'),disclosureBody()),
+      pid==='openrouter'?h('p',null,'OpenRouter forwards this content to the host serving your chosen model.'):null,
+      h('div',{class:'row edit-actions'},h('button',{class:'btn',onClick:back},'Back to edit'),
+        thenSend&&LIVE?h('button',{class:'btn primary',onClick:function(){S.disclosedFor=pid;back();send()}},'Send to '+provLabel(pid)):null))));
+  host.querySelector('button').focus();
 }
 var PROVIDER_HELP={
   gemini:'Uses a Gemini API key from Google AI Studio.',
@@ -890,10 +986,12 @@ function openContext(){
   }},LIVE?'Save context':'Save (demo only)')]);
 }
 function openNewIdea(){
+  if(!canLeaveEdits())return;
   if(S.busy||!S.ws)return;
   var t=h('input',{class:'inp',id:'n-title',maxlength:'180',placeholder:'e.g. Weekly report preparation'}),pr=h('textarea',{class:'inp',id:'n-prob',rows:'3',maxlength:'2400',placeholder:'Optional — a sentence about what gets in the way'}),err=h('p',{class:'err',style:'margin:0'});
   function go(){var v=t.value.trim();if(!v){err.textContent='Give it a short working title — you can rename it later.';t.focus();return}
-    S.scrollNext=true;mutate('createIdea',{title:v,problem:pr.value},'Idea saved').then(function(ok){if(ok){closeDialog();$('msg').focus()}else{err.textContent=S.notice?S.notice.text:'';}})}
+    var oldId=S.ws.selectedId||'new',unsent=$('msg').value;
+    S.scrollNext=true;mutate('createIdea',{title:v,problem:pr.value},'Idea saved').then(function(ok){if(ok){S.replyDrafts[oldId]=unsent;$('msg').value='';autosize();closeDialog();$('msg').focus()}else{err.textContent=S.notice?S.notice.text:'';}})}
   openDialog('Start another idea',h('form',{class:'form',onSubmit:function(e){e.preventDefault();go()}},
     h('p',{class:'hint',style:'margin:0'},'Your current ideas stay as they are. The new one becomes your focus.'),
     h('div',null,h('label',{for:'n-title'},'Working title'),t),h('div',null,h('label',{for:'n-prob'},'What\'s the problem? (optional)'),pr),err),
@@ -966,7 +1064,7 @@ $('expBtn').addEventListener('click',openExport);
 $('moreBtn').addEventListener('click',openMore);
 $('whatSent').addEventListener('click',function(){openDisclosure(false)});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&S.railOpen&&!$('dlg').open){S.railOpen=false;renderRail();$('railBtn').focus()}});
-window.addEventListener('beforeunload',function(e){if(S.busy||$('msg').value.trim()){e.preventDefault();e.returnValue=''}});
+window.addEventListener('beforeunload',function(e){if(S.busy||$('msg').value.trim()||hasUnsavedEdits()){e.preventDefault();e.returnValue=''}});
 
 /* ---------- demonstration backend (fictional, in memory, no network) ---------- */
 var Demo=(function(){
@@ -1032,7 +1130,7 @@ var Demo=(function(){
     '\n\n## Permissions and next step\n'+f.permissions+'\nReviewer: '+t(f.reviewer)+'\nDecision reference: '+t(f.approvalEvidence)+'\n'+a.nextDecision+'\n'+a.checks.map(function(v){return '- '+v}).join('\n')+'\nA pitch does not grant permission to implement.\n\n## Contribution and actual results\nContribution: '+t(f.contribution)+'\nActual results: '+t(f.actualResult)+'\nResult source: '+t(f.resultSource)+'\nConfirmed by: '+t(f.resultReviewer)+'\n\n(FICTIONAL DEMONSTRATION)\n'}
   function view(i){var v=clone(i),ms=st.msgs[i.id]||[],d=st.drafts[i.id];v.messages=ms.slice(-40);v.messageCount=ms.length;v.draft=d&&d.baseRevision===i.revision?clone(d):null;v.forecast=forecast(i);v.pitch=pitch(st.context,i);return v}
   function boot(){var sel=st.ideas.some(function(i){return i.id===st.context.selectedId})?st.context.selectedId:st.ideas.length?st.ideas[0].id:null;
-    return {schema:'tomboj.make-the-case.sheets.v1',version:'0.3.1',context:clone(st.context),selectedId:sel,ideas:st.ideas.map(view),settings:clone(st.settings),usage:{date:today,timezone:'UTC',calls:0,promptTokens:0,outputTokens:0,totalTokens:0}}}
+    return {schema:'tomboj.make-the-case.sheets.v1',version:'0.4.0',context:clone(st.context),selectedId:sel,ideas:st.ideas.map(view),settings:clone(st.settings),usage:{date:today,timezone:'UTC',calls:0,promptTokens:0,outputTokens:0,totalTokens:0}}}
   function find(id){var i=st.ideas.filter(function(x){return x.id===id})[0];if(!i)throw new Error('This idea is no longer in the workspace. Reopen the tracker.');return i}
   function rev(i,r){if(!Number.isInteger(r)||i.revision!==r)throw new Error('This case changed in another window. Reload it before saving.')}
   function patch(i,p,ai){var o=clone(i);
@@ -1049,6 +1147,19 @@ var Demo=(function(){
       case 'createIdea':var id='demo-'+newId();st.ideas.push(blank(id,String(p.title).trim(),p.problem||'',new Date().toISOString()));st.msgs[id]=[];st.context.selectedId=id;return boot();
       case 'selectIdea':find(p.ideaId);st.context.selectedId=p.ideaId;return boot();
       case 'acceptDraft':i=find(p.ideaId);rev(i,p.revision);d=st.drafts[i.id];if(!d||d.id!==p.draftId||d.baseRevision!==i.revision)throw new Error('This draft is no longer current. Reopen the case and review the latest version.');put(patch(i,{fields:d.fields,metrics:d.metrics},true));return boot();
+      case 'reviewDraft':
+        i=find(p.ideaId);rev(i,p.revision);d=st.drafts[i.id];
+        if(!d||d.id!==p.draftId||d.baseRevision!==i.revision)throw new Error('This draft is no longer current. Reopen the case and review the latest version.');
+        var remaining=clone(d),chosen=0;
+        ['fields','metrics'].forEach(function(group){Object.keys(p[group]||{}).forEach(function(k){
+          if(!Object.prototype.hasOwnProperty.call(remaining[group],k))throw new Error('Choose a current suggestion.');
+          if(group==='metrics'&&p[group][k]!==null&&(!Number.isFinite(p[group][k])||p[group][k]<0||(['coverage','uptake'].indexOf(k)>=0&&p[group][k]>100)))throw new Error('Use a valid non-negative number.');
+          delete remaining[group][k];chosen++;
+        })});
+        (p.skip||[]).forEach(function(path){var a=path.split('.');if(a.length!==2||['fields','metrics'].indexOf(a[0])<0||!Object.prototype.hasOwnProperty.call(remaining[a[0]],a[1]))throw new Error('Choose a current suggestion.');delete remaining[a[0]][a[1]];chosen++});
+        if(!chosen)throw new Error('Choose a suggestion to save or skip.');
+        var reviewed=patch(i,{fields:p.fields||{},metrics:p.metrics||{}},true);put(reviewed);remaining.baseRevision=reviewed.revision;
+        st.drafts[i.id]=Object.keys(remaining.fields).length+Object.keys(remaining.metrics).length?remaining:null;return boot();
       case 'updateIdea':i=find(p.ideaId);rev(i,p.revision);put(patch(i,p.patch,false));return boot();
       case 'saveSettings':if(p.apiKey)throw new Error('Keys can\'t be entered in the demonstration.');
         var pe=st.settings.providers.filter(function(x){return x.id===p.provider})[0];if(!pe)throw new Error('Choose Gemini, Claude, OpenAI, OpenRouter, or Kimi.');
@@ -1058,7 +1169,7 @@ var Demo=(function(){
       case 'deleteKey':return boot();
       case 'getModels':throw new Error('Demonstration — no AI calls. Model catalogs aren\'t looked up.');
       case 'deleteIdea':i=find(p.ideaId);rev(i,p.revision);st.ideas=st.ideas.filter(function(x){return x.id!==i.id});delete st.msgs[i.id];delete st.drafts[i.id];if(st.context.selectedId===i.id)st.context.selectedId='';return boot();
-      case 'exportWorkspace':return {schema:'tomboj.make-the-case.sheets.v1',version:'0.3.1',exportedAt:new Date().toISOString(),demonstration:'FICTIONAL DEMONSTRATION DATA — not from a Google Sheet',context:clone(st.context),ideas:st.ideas.map(clone),history:[],settings:clone(st.settings),usage:boot().usage};
+      case 'exportWorkspace':return {schema:'tomboj.make-the-case.sheets.v1',version:'0.4.0',exportedAt:new Date().toISOString(),demonstration:'FICTIONAL DEMONSTRATION DATA — not from a Google Sheet',context:clone(st.context),ideas:st.ideas.map(clone),history:[],settings:clone(st.settings),usage:boot().usage};
       case 'chat':i=find(p.ideaId);var now=new Date().toISOString();(st.msgs[i.id]=st.msgs[i.id]||[]).push({role:'user',text:p.message,at:now});
         st.msgs[i.id].push({role:'assistant',text:replies[n++%replies.length],at:new Date().toISOString()});delete st.drafts[i.id];
         var v=view(i);return {idea:v,messages:v.messages,draft:v.draft,forecast:v.forecast,usage:boot().usage};

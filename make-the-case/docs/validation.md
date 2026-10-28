@@ -1,5 +1,13 @@
 # Validation record
 
+## Sheets kit 0.4.0 walkthrough fixes — October 28, 2026
+
+62 Node checks pass. New coverage executes the real Apps Script code with simulated Google services/provider responses: partial review validates chosen draft keys, preserves pending proposals across a fresh runtime, safely skips suggestions without altering saved values, rejects protected or stale changes, and includes reader edits in the pitch. A full customer-update scenario runs two conversations, accepts and edits suggestions, reopens, calculates 9.4 forecast hours/month with explicitly fictional inputs, produces a pitch with missing results/permissions visible, and exports records without the key. Additional checks exercise unsaved-edit cancellation, rule-based resume guidance, idempotent Start Here/button creation, and preservation of nonempty Sheet1/unrelated Start Here content.
+
+In the actual local HTML demonstration, editing and saving one suggestion left the other two available. Case editing exposed Save changes / Cancel and Close editor. The case panel's observed client height was 489 CSS pixels with 2,054 pixels of content; scrolling moved its scrollTop to approximately 1,565, reaching the lower sections. A saved quality requirement appeared in the pitch. The inline send-review view replaced the conversation/composer instead of adding a nested popup and exposed expandable context plus Back to edit. A requested viewport override again produced an observed 1,222 × 722 CSS-pixel viewport, so exact requested-size Google-dialog coverage is not claimed.
+
+Rachel's supplied screenshots from the earlier installation show an AI reply, saved status, and reopening from the Sheet. The maintainer has not independently inspected that live provider call or the Sheet records. The 0.4.0 code still needs installing in the existing bound project and the [live end-to-end walkthrough](../apps-script/UPDATE-AND-TEST.md), including the native Start Here image button and downloads inside Google's iframe. Tests are not a substitute for that installation check.
+
 October 28, 2026. Sheets kit 0.3.1 and earlier browser demonstration 0.1.
 
 ## Sheets backend checks

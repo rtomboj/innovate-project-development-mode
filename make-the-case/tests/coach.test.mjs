@@ -28,7 +28,7 @@ function sender(response, setup) {
   const context = { Promise, Number, Error, Object,
     LIVE: true, S: { busy: false, ws: { selectedId: item.id, ideas: [item], usage: { calls: 0 }, settings: { provider: 'gemini', model: 'gemini-3.8-flash', hasKey: true, maxCallsPerDay: 20 } }, disclosedFor: 'gemini', setAside: {}, pending: null },
     $: () => box, setBusy: value => { context.S.busy = value; }, setNotice: (kind, text) => { context.notice = { kind, text }; },
-    renderNotice() {}, renderAll() {}, openSettings() {}, openDisclosure() {}, markSaved() {}, announce() {},
+    renderNotice() {}, renderAll() {}, openSettings() {}, openDisclosure() {}, markSaved() {}, announce() {}, hasUnsavedEdits: () => false, autosize() {},
     classify: () => 'error', newId: () => 'unique-request-id', isWorkspace: () => true,
     isIdea: i => !!i && typeof i.id === 'string' && Array.isArray(i.messages),
     handleErr: e => { context.outerError = e; return Promise.resolve(); }, reloadAfterStale: () => Promise.resolve(),
@@ -56,6 +56,24 @@ test('an uncertain request cannot silently be retried on a different provider or
   const s = sender({}, c => { c.S.pending = { ideaId: 'case-1', message: 'A rough idea', requestId: 'original-request-id', state: 'uncertain', provider: 'openai', model: 'gpt-6.1-sol' }; });
   s.context.send(true); await s.settle(); assert.equal(s.calls.length, 0); assert.match(s.context.notice.text, /original provider and model/);
 });
+test('unsaved case and suggestion edits require explicit discard and remain intact when cancelled', () => {
+  let allow = false, prompts = 0;
+  const context = { S: { edit: { vals: { problem: 'Changed' }, original: JSON.stringify({ problem: 'Original' }) }, draftEdit: null }, window: { confirm() { prompts++; return allow; } } };
+  vm.createContext(context);vm.runInContext(extract('function hasUnsavedEdits()', 'function focusEdit()'),context);
+  assert.equal(context.canLeaveEdits(),false);assert.equal(context.S.edit.vals.problem,'Changed');
+  allow=true;assert.equal(context.canLeaveEdits(),true);assert.equal(context.S.edit,null);
+  context.S.draftEdit={value:'Revised suggestion',original:'Suggested'};allow=false;
+  assert.equal(context.canLeaveEdits(),false);assert.equal(context.S.draftEdit.value,'Revised suggestion');
+  context.S.draftEdit.value='Suggested';assert.equal(context.canLeaveEdits(),true);assert.equal(prompts,3);
+});
+
+test('returning to a saved idea identifies the next missing information without making an AI call', () => {
+  const context={ML:{}};vm.createContext(context);vm.runInContext(extract('function nextStep(i)', 'function continueCard(i)'),context);
+  const i={fields:{problem:'Late customer updates',outcome:'',currentWork:'Manual drafting'},metrics:{}};
+  assert.match(context.nextStep(i).question,/business or customer outcome/);
+  i.fields.outcome='More reliable updates';assert.match(context.nextStep(i).question,/What would change/);
+});
+
 test('demo provider settings follow the real provider catalog and forecast calculations match Core.gs', async () => {
   let id = 0;
   const context = { setTimeout: fn => fn(), newId: () => 'demo-id-' + (++id), clone: clean };

@@ -40,7 +40,8 @@ function setupWorkspace() {
     var existingKeys = mtcRead_('Context').map(function (r) { return r[0]; });
     MTC.context.forEach(function (k) { if (existingKeys.indexOf(k) < 0) mtcPutContext_(k, ''); });
     mtcRefreshViews_();
-    book.toast('Workspace ready. Add Coach.html, then choose Make the Case → Open coach.');
+    mtcStartHere_(book); onOpen();
+    book.toast('Ready. Open the Start Here tab and click Open coach, or use Make the Case → Open coach in the top menu.');
   } finally { lock.releaseLock(); }
 }
 function showCoach() {
@@ -94,6 +95,13 @@ function api(request) {
         var accepted = mtcPatch_(current, { fields: draft.fields, metrics: draft.metrics }, true, at);
         mtcHistoryCapacity_(1, { draftId: draft.id, revision: accepted.revision });
         mtcSaveIdea_(accepted); mtcHistory_(current.id, 'accepted', '', 'Reader accepted proposed changes', { draftId: draft.id, revision: accepted.revision }, at);
+        mtcRefreshViews_(); data = mtcBootstrap_(); break;
+      case 'reviewDraft':
+        var reviewIdea = mtcFindIdea_(p.ideaId); mtcRevision_(reviewIdea, p.revision);
+        var selection = mtcReviewSelection_(reviewIdea, mtcDraft_(reviewIdea, mtcHistoryRows_()), p, at);
+        var reviewData = { draft: selection.draft, patch: selection.patch, skipped: selection.skipped, revision: selection.idea.revision };
+        mtcHistoryCapacity_(1, reviewData);
+        mtcSaveIdea_(selection.idea); mtcHistory_(reviewIdea.id, 'reviewed', '', 'Reader reviewed selected suggestions', reviewData, at);
         mtcRefreshViews_(); data = mtcBootstrap_(); break;
       case 'updateIdea':
         mtcKeys_(p, ['ideaId', 'patch', 'revision']);
@@ -217,7 +225,7 @@ function mtcMessages_(id, history) {
       requestId: e.requestId, status: e.type === 'reply' ? 'saved' : replied[e.requestId] ? 'replied' : failed[e.requestId] ? 'failed' : 'unanswered' }; });
 }
 function mtcDraft_(idea, history) {
-  var entries = history.filter(function (e) { return e.ideaId === idea.id && e.type === 'reply'; });
+  var entries = history.filter(function (e) { return e.ideaId === idea.id && (e.type === 'reply' || e.type === 'reviewed'); });
   var latest = entries.length ? entries[entries.length - 1].data.draft : null;
   if (!latest || latest.baseRevision !== idea.revision) return null;
   // Validate stored model output again before exposing it as an actionable draft.
@@ -355,4 +363,38 @@ function mtcRefreshViews_() {
       a.coveredTasks, a.grossHours, a.netHours, a.monthlyCash, a.totalCost, a.totalBenefit, a.roi,
       f.actualResult, f.resultSource].map(function (v) { return v === null ? '' : v; });
   }));
+}
+
+/** Creates a visible entry point, preserving every nonempty/unrelated tab. */
+function mtcStartHere_(book) {
+  var marker = 'Make the Case | Start Here', props = PropertiesService.getDocumentProperties();
+  var name = props.getProperty('MTC_START_TAB') || 'Start Here', sheet = book.getSheetByName(name);
+  if (sheet && sheet.getLastRow() && sheet.getRange(1, 1, 1, 1).getValues()[0][0] !== marker) {
+    name = 'Make the Case - Start'; sheet = book.getSheetByName(name);
+    if (sheet && sheet.getLastRow() && sheet.getRange(1, 1, 1, 1).getValues()[0][0] !== marker) return;
+  }
+  if (!sheet) {
+    var initial = book.getSheetByName('Sheet1');
+    if (initial && !initial.getLastRow() && !initial.getLastColumn() && !initial.getImages().length && !initial.getDrawings().length && !initial.getCharts().length) sheet = initial.setName(name);
+    else sheet = book.insertSheet(name);
+  }
+  props.setProperty('MTC_START_TAB', name);
+  // Only write the managed header/instructions. Other reader content remains untouched.
+  mtcWrite_(sheet, 1, [[marker, ''], ['', 'Make the Case'], ['', 'Your AI opportunity tracker and conversation memory'], ['', ''], ['', ''], ['', ''], ['', ''],
+    ['', 'REOPEN ANY TIME'], ['', 'Click Open coach above. Or use the Make the Case menu beside Help → Open coach.'],
+    ['', 'Continue your selected idea: review suggestions, answer the next question, then review your pitch draft.'],
+    ['', 'New idea starts a separate opportunity. Your existing ideas stay in this Sheet.'],
+    ['', 'Save changes saves case notes. Send reply asks the AI for its next response.'],
+    ['', 'No deployment is needed. If the menu is missing, reload this spreadsheet.'],
+    ['', 'Use the coach for edits; Ideas and Evidence & costs are refreshed from the saved Cases.']]);
+  sheet.setHiddenGridlines(true); sheet.setColumnWidth(1, 28); sheet.setColumnWidth(2, 780);
+  sheet.getRange(1, 1, 14, 2).setBackground('#111418').setFontColor('#e8ebef').setWrap(true);
+  sheet.getRange(2, 2, 1, 1).setFontSize(28).setFontWeight('bold');
+  sheet.getRange(8, 2, 1, 1).setFontColor('#89c1fa').setFontWeight('bold');
+  for (var row = 1; row <= 14; row++) sheet.setRowHeight(row, row === 2 ? 52 : 34);
+  if (!sheet.getImages().some(function (img) { return img.getAltTextTitle() === 'Make the Case: Open coach'; })) {
+    var button = sheet.insertImage(Utilities.newBlob(Utilities.base64Decode('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'), 'image/png', 'open-coach.png'), 2, 5);
+    button.setAltTextTitle('Make the Case: Open coach').setAltTextDescription('Open or resume your Make the Case conversation').assignScript('showCoach');
+  }
+  book.setActiveSheet(sheet); book.moveActiveSheet(1);
 }

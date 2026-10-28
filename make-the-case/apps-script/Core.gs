@@ -1,7 +1,7 @@
 /* Pure record and calculation functions. No Google services or credentials here. */
 var MTC = {
   schema: 'tomboj.make-the-case.sheets.v1',
-  version: '0.3.1',
+  version: '0.4.0',
   fields: ['status', 'problem', 'outcome', 'currentWork', 'proposedWork', 'exclusions',
     'selectionReason', 'originator', 'businessOwner', 'collaborators', 'audiences', 'learning',
     'permissions', 'reviewer', 'approvalEvidence', 'baselineSource', 'evidence', 'assumptions',
@@ -18,6 +18,30 @@ var MTC = {
   maxIdeas: 200,
   maxHistory: 5000
 };
+
+/** Review only the chosen suggestions; carry the rest forward at the new revision. */
+function mtcReviewSelection_(idea, draft, payload, at) {
+  mtcKeys_(payload, ['ideaId', 'draftId', 'revision', 'fields', 'metrics', 'skip']);
+  if (!draft || draft.id !== payload.draftId || draft.baseRevision !== idea.revision || payload.revision !== idea.revision) throw new Error('This draft is no longer current. Reopen the case and review the latest version.');
+  var fields = payload.fields || {}, metrics = payload.metrics || {}, skip = payload.skip || [];
+  mtcKeys_(fields, Object.keys(draft.fields)); mtcKeys_(metrics, Object.keys(draft.metrics));
+  if (!Array.isArray(skip) || skip.length > MTC.fields.length + MTC.metrics.length) throw new Error('Choose valid suggestions to skip.');
+  var remaining = JSON.parse(JSON.stringify(draft)), chosen = [];
+  ['fields', 'metrics'].forEach(function (group) {
+    Object.keys(group === 'fields' ? fields : metrics).forEach(function (key) { chosen.push(group + '.' + key); delete remaining[group][key]; });
+  });
+  skip.forEach(function (path) {
+    if (typeof path !== 'string') throw new Error('Choose valid suggestions to skip.');
+    var parts = path.split('.'), group = parts[0], key = parts[1];
+    if (parts.length !== 2 || ['fields', 'metrics'].indexOf(group) < 0 || !Object.prototype.hasOwnProperty.call(remaining[group], key) || chosen.indexOf(path) >= 0) throw new Error('Choose valid suggestions to skip.');
+    chosen.push(path); delete remaining[group][key];
+  });
+  if (!chosen.length) throw new Error('Choose a suggestion to save or skip.');
+  var updated = mtcPatch_(idea, { fields: fields, metrics: metrics }, true, at);
+  remaining.baseRevision = updated.revision;
+  if (!Object.keys(remaining.fields).length && !Object.keys(remaining.metrics).length) remaining = null;
+  return { idea: updated, draft: remaining, patch: { fields: fields, metrics: metrics }, skipped: skip };
+}
 
 function mtcObject_(v) {
   if (!v || typeof v !== 'object' || Array.isArray(v)) throw new Error('Use an object for this request.');
