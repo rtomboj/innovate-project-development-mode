@@ -4,7 +4,7 @@
 
 Collect your ideas, develop one through a conversation, and prepare a specific next-step request. Keep the evidence, decisions, and your contribution as the work progresses. You do not have to build the solution yourself.
 
-**Looking for the original Innovate skill?** [Innovate](https://github.com/rtomboj/innovate-project-development-mode/blob/main/TombojInnovateSkill.md) guides project scoping, feasibility, build stages, and validation with Claude. **Make the Case** helps someone develop and pitch a workplace improvement. The Sheets kit runs independently of Innovate. [Compare the routes and review this branch](docs/reviewer-guide.md).
+**Innovate or Make the Case?** [Innovate](https://github.com/rtomboj/innovate-project-development-mode/blob/main/TombojInnovateSkill.md) guides how AI works an idea through with you before jumping to solutions: flesh it out, surface missing context, compare best/cost-effective/innovative approaches, and decide what comes next. **Make the Case** organizes workplace insight into an evidence-aware proposal and a record of ideas, decisions, contributions, and results. Both can start with a rough idea; neither requires the other. [Choose a starting point](docs/reviewer-guide.md).
 
 **[Download the Google Sheets kit — v0.5.0](downloads/make-the-case-google-sheets-v0.5.0.zip)** · **[Start here](START-HERE.md)** · **[Update an existing copy](apps-script/UPDATE-AND-TEST.md)**
 
