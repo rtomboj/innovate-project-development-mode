@@ -4,5 +4,9 @@
   "private": true,
   "type": "module",
   "description": "A reader-owned Google Sheets coaching kit and browser demonstration for developing a credible work-improvement case.",
-  "scripts": { "test": "node --test tests/*.test.mjs", "check": "node scripts/check-package.mjs" }
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check": "node scripts/check-package.mjs"
+  },
+  "license": "MIT"
 }

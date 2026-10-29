@@ -4,14 +4,14 @@ description: "Use when the user wants to work through and fully form an idea bef
 author: Rachel Wilde
 contact: rachel@tomboj.com
 linkedin: https://www.linkedin.com/in/rwilde1st/
-license: This methodology is the intellectual property of Rachel Wilde / Tomboj. Free to use for personal and professional development. Not for resale or redistribution without permission.
+license: MIT
 ---
 
 # /innovate — Think an Idea Through Before Building
 ## A Working Methodology for AI Assistants and Interactive Agents
-### Created by Rachel Wilde · Tomboj · v1.1
+### Created by Rachel Wilde · Tomboj · v1.2
 
-> **About this skill:** This idea-development and assessment methodology was created by Rachel Wilde, founder of Tomboj, an AI transformation consultancy. It is shared freely for personal and professional use.
+> **About this skill:** This idea-development and assessment methodology was created by Rachel Wilde, founder of Tomboj, an AI transformation consultancy. It is available under the MIT License.
 > 📧 rachel@tomboj.com · 🔗 [linkedin.com/in/rwilde1st](https://www.linkedin.com/in/rwilde1st/)
 
 ## Why this skill exists
@@ -267,20 +267,35 @@ The original personalized method became a generic edition with onboarding. This 
 
 ---
 
-## Intellectual Property & Attribution
+## License and Attribution
 
-This methodology is the original work of **Rachel Wilde**, founder of [Tomboj](https://www.linkedin.com/in/rwilde1st/), an AI transformation consultancy working with PE/VC and mid-market organizations.
+Created by **Rachel Wilde / Tomboj**. Innovate is available under the [MIT License](LICENSE). The complete license is included below so the notice can travel with a standalone copy of this file.
 
-**You are welcome to:**
-- Use this skill for your own personal and professional project development
-- Share it with colleagues or collaborators (with attribution intact)
+```text
+MIT License
 
-**Please do not:**
-- Resell or redistribute this skill as your own work
-- Remove or alter the authorship information embedded in this file
+Copyright (c) 2026 Rachel Wilde / Tomboj
 
-If this methodology has been valuable to you, Rachel would love to hear about it.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+For questions or feedback:
 📧 **rachel@tomboj.com**
 🔗 **[linkedin.com/in/rwilde1st](https://www.linkedin.com/in/rwilde1st/)**
 
@@ -288,5 +303,6 @@ If this methodology has been valuable to you, Rachel would love to hear about it
 
 ## Version History
 
+- v1.2 — October 29, 2026 — Released Innovate under the MIT License at Rachel's request. Replaced the former restricted-use terms with MIT, included the full license for standalone copies, and retained Rachel Wilde / Tomboj attribution. The v1.1 thinking-partner guidance is unchanged.
 - v1.1 — October 29, 2026 — Clarified Rachel's original purpose: work an idea through before AI jumps to solutions, expose missing context and dead ends, and support informed decisions. Added explicit assessment outcomes, optional project/build stages, platform-neutral assistant/agent guidance, and when to use Make the Case. Authorship and use terms are unchanged.
 - v1.0 — May 2026 — Generic shareable edition. Created by Rachel Wilde / Tomboj. Derived from a personalized working methodology built through extended use. Onboarding flow added. All personal context removed to make it universally applicable.

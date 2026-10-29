@@ -83,6 +83,8 @@ Collect ideas, develop one through dialogue, and prepare a bounded next request.
 
 Make the Case is an early-release kit. See [verification and limits](make-the-case/docs/validation.md) for the completed local checks and remaining live Google/provider checks.
 
-## Attribution and use terms
+## License and attribution
 
-Read [TombojInnovateSkill.md](TombojInnovateSkill.md) for the Innovate methodology's authorship and use terms. The Make the Case module has its own [license and attribution](make-the-case/ATTRIBUTIONS.md); those do not change Innovate's terms.
+Created by **Rachel Wilde / Tomboj**. Innovate, Make the Case, and the original code and documentation in this repository are available under the [MIT License](LICENSE).
+
+The Innovate file includes the complete MIT notice for standalone sharing. Make the Case retains its matching [module license](make-the-case/LICENSE) and [attribution record](make-the-case/ATTRIBUTIONS.md). Third-party material and brand identifiers retain their own applicable rights and terms.

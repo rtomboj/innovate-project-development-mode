@@ -68,4 +68,4 @@ The assistant-neutral [method folder](skills/make-the-case/) and earlier [browse
 
 For maintainers, run `node --test tests/*.test.mjs`, `node scripts/check-package.mjs`, and `python scripts/package_sheets.py`. The package script updates the ZIP in downloads/ and outputs/ and its SHA256SUMS file. Provider, case, calculation, revision, request, key-redaction, and draft/board behaviors have simulated tests; see validation before making broader claims.
 
-Created by Rachel Wilde / Tomboj. Original code and written materials in this module use the [MIT license](LICENSE), except third-party sources and brand identifiers. [Attribution](ATTRIBUTIONS.md) explains provenance. The repository’s pre-existing methodology has not been relicensed or replaced.
+Created by Rachel Wilde / Tomboj. Original code and written materials in this module use the [MIT license](LICENSE), except third-party sources and brand identifiers. [Attribution](ATTRIBUTIONS.md) explains provenance. Innovate also uses MIT; see the [repository license](../LICENSE).
