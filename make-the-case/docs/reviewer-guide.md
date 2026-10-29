@@ -64,7 +64,7 @@ Open the [five-view screenshot walkthrough](example-gallery.md). It follows one 
 
 ## Scope and source map
 
-- The root README explains Innovate's origin, the assessment and optional build path, assistant/agent use, and when to choose each method. `TombojInnovateSkill.md` v1.1 carries that guidance into the instructions while retaining authorship and use terms.
+- The root README explains Innovate's origin, the assessment and optional build path, assistant/agent use, and when to choose each method. `TombojInnovateSkill.md` v1.2 carries that guidance into the instructions under the MIT License, retaining Rachel Wilde / Tomboj attribution.
 - `make-the-case/apps-script/` contains the installable Google Sheets application. `scripts/coach-dialogue-ui.*` and `scripts/build_coach_ui.py` generate its current dialogue layout while retaining the working gateway.
 - `make-the-case/skills/make-the-case/` contains the separate portable method; installing it is optional for app users.
 - `make-the-case/web-preview/` is a design-only prototype. `dist/` is the earlier browser workspace. Neither replaces the installable Apps Script kit.
@@ -74,6 +74,6 @@ Open the [five-view screenshot walkthrough](example-gallery.md). It follows one 
 
 The images capture the actual built v0.5.0 Coach file locally, in its labeled fictional demonstration mode. They show available interface states. They do not establish real AI response quality, Google permissions, provider billing, business savings, or adoption.
 
-The application's [validation record](validation.md) documents 64 local automated checks and local browser checks, with live installed-Sheet/provider verification still open. Those application checks do not test every assistant's adherence to Innovate v1.1. The revised instructions explain intended behavior; completed cross-platform coaching validation is not claimed.
+The application's [validation record](validation.md) documents 64 local automated checks and local browser checks, with live installed-Sheet/provider verification still open. Those application checks do not test every assistant's adherence to Innovate v1.2. The revised instructions explain intended behavior; completed cross-platform coaching validation is not claimed.
 
 The screenshot-led presentation follows the approach of [Tomboj VOC Signal-to-Change](https://github.com/rtomboj/tomboj-voc-signal-to-change): clear starting routes, synthetic examples, captions explaining the workflow, and explicit separation of previews from live results.
