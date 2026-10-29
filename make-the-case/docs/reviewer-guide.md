@@ -1,25 +1,53 @@
-# Reviewing this branch: Innovate and Make the Case
+# Innovate or Make the Case: choose a starting point
 
-**Innovate is a project-development skill for Claude. Make the Case is a workplace-idea coaching workflow and Google Sheets kit.** The app was added in [PR #1](https://github.com/rtomboj/innovate-project-development-mode/pull/1), which is now merged. This follow-up adds reviewer navigation and screenshots; it changes neither the app code nor the original Innovate skill. Readers do not need to use Innovate to run the Sheet.
+**Innovate guides how AI works through an idea with you. Make the Case organizes workplace insight into a proposal and a continuing record.**
+
+Rachel created Innovate because an LLM would jump into solutions before she had finished thinking through an idea. She needed a collaborator that would help her flesh out the full context and flow, uncover missing pieces, and explore different approaches. Sometimes that showed a worthwhile path; sometimes it helped her stop before spending time on a dead end.
+
+Innovate can support an assessment without becoming a project. Make the Case can support a proposal without the originator becoming the solution's builder. Both can begin with a rough idea, and neither is a required first step for the other.
 
 ## Choose the right route
 
 | | Innovate | Make the Case — Google Sheets | Make the Case — portable skill |
 | --- | --- | --- | --- |
-| Main question | How should we scope, assess, build, and validate this project together? | How do I turn what I know about work into a proposal someone can evaluate? | How can an assistant guide me through that same case-development method? |
-| Intended user | Someone developing a project with Claude | An employee, team leader, or manager with one or many ideas; no builder role required | Someone who prefers working in a capable assistant using the supplied instructions |
-| Form | Claude working methodology, including onboarding and collaboration rules | Google Sheet plus bound Apps Script HTML interface and the reader's own permitted AI key | Instructions and supporting measurement references |
-| Stages | Flow & Scope → Feasibility → Build Stages → Validate & Adjust | Collect → Develop → Advance, with a separate record of decisions | Adaptable discovery, case development, pitch, and continuation records |
-| Output | Project flow, feasibility assessment, staged build and validation decisions | Saved ideas, case notes, evidence and scenario costs, pitch, decisions, and contribution/results record | Portable case and continuation records saved in files or tables |
-| Entry point | [Original Innovate skill](https://github.com/rtomboj/innovate-project-development-mode/blob/main/TombojInnovateSkill.md) | [Reader setup](../START-HERE.md) | [Make the Case skill](../skills/make-the-case/SKILL.md) |
+| Main question | Can you help me work this idea through fully, compare approaches, and decide what comes next? | How do I bring a workplace improvement forward with evidence and a specific request? | How can an assistant guide me through that same case-development method? |
+| Intended user | Someone who wants a thinking partner for an idea, business, service, process, personal tool, or possible project | An employee, team leader, or manager with one or many ideas; no builder role required | Someone who prefers working in a capable assistant using the supplied instructions |
+| Form | Reusable instructions for a capable assistant or interactive agent, with onboarding and a working agreement | Google Sheet plus bound Apps Script HTML interface and the reader's own permitted AI key | Instructions and supporting measurement references |
+| Flow | Flow & Scope → Feasibility & Decision; project/build stages only if chosen | Collect → Develop → Advance, with a separate record of decisions | Adaptable discovery, case development, pitch, and continuation records |
+| Approaches | Explicit best, cost-effective, and innovative angles for substantive choices | Relevant alternatives, including ordinary automation or process change; the current app does not require those three fixed lenses | Relevant alternatives; the current method does not require those three fixed lenses |
+| Output | An explored idea, flow, options, gaps, and a reasoned decision; optional project plan | Saved ideas, case notes, evidence and scenario costs, pitch, decisions, and contribution/results record | Portable case and continuation records saved in files or tables |
+| Entry point | [Innovate skill](../../TombojInnovateSkill.md) | [Reader setup](../START-HERE.md) | [Make the Case skill](../skills/make-the-case/SKILL.md) |
 
-The methods overlap in careful scoping and validation. Their purpose, interface, and output differ. Innovate could guide a separate implementation project after a case earns support; it is not called by the Sheets app, and the app does not automatically start an implementation project. This comparison describes intended use, not proof that a particular development session followed every Innovate instruction.
+The difference is the purpose of the work, not which person has a more developed idea. Innovate emphasizes the thinking partnership and full exploration. Make the Case adds a specific organizational structure: business/customer outcomes, evidence and economics, affected people, permissions, decision requests, shared contribution, and follow-through.
+
+## When to use each
+
+- **I have an idea and the AI keeps rushing into answers:** use Innovate.
+- **I need to understand the whole flow and discover what I have missed:** use Innovate.
+- **I need to compare approaches and decide whether this deserves more time:** use Innovate.
+- **I need to bring a workplace improvement to a manager, sponsor, or reviewer:** use Make the Case.
+- **I need a baseline, costs, collaborators, permissions, and a bounded request:** use Make the Case.
+- **I want to retain several ideas and track decisions, contributions, and later results:** use Make the Case.
+
+You can draw on Innovate's three angles while developing a case, or carry an Innovate assessment into Make the Case. If a supported idea becomes a project, Innovate can continue into build planning and validation. Those are possible handoffs, not a required sequence.
+
+A recommendation to proceed, a completed pitch, and a board outcome are not substitutes for actual organizational approval or permission to execute.
 
 ## A concrete example
 
-An employee notices weekly client updates take too long and miss commitments. **Make the Case** helps them describe the work, retain baseline evidence, identify affected people and permissions, estimate a scenario including checking costs, and ask for a limited next step. They can pitch that work without personally building an AI integration.
+Dana notices that refunds over $50 can wait two days for a sign-off that is usually yes. This is a fictional illustration, not verified company data.
 
-If a team then decides to develop a solution, **Innovate** can guide a Claude session to map the full flow, examine feasibility, sequence the build, and validate stages. The proposal still needs real organizational decisions; a generated pitch or board label does not authorize implementation.
+With **Innovate**, she can talk through the whole situation before accepting a proposed solution: what triggers the wait, who is involved, which exceptions matter, what context is missing, and how the best, cost-effective, and innovative approaches compare. She may decide to stop, change the idea, or investigate further. A build is not the default result.
+
+With **Make the Case**, she can turn that insight into a request someone can evaluate: measure one queue with a Finance reviewer, establish the baseline, explain relevant people and permissions, and bring back a recommendation. The case retains the evidence, uncertainty, decisions, and her contribution even if someone else would build a solution.
+
+## Using Innovate with assistants and agents
+
+Read and supply the complete Innovate file using the host's supported instruction mechanism. A named skill, uploaded file, and accessible repository link are different loading routes. Typing a slash command alone does not install the method everywhere.
+
+An interactive assistant can guide the conversation. An agent can use authorized tools to gather evidence, compare options, and prepare a brief, returning meaningful choices to the user. The guide does not itself provide tool access, persistent memory, or permission to act. Rachel's continued use in Claude is the stated origin; support for supplied instructions is not proof of identical behavior across all platforms.
+
+The Sheets app does not call or require the Innovate file. Make the Case's portable skill is also independent of the Sheets interface.
 
 ## Review the experience before the code
 
@@ -36,7 +64,7 @@ Open the [five-view screenshot walkthrough](example-gallery.md). It follows one 
 
 ## Scope and source map
 
-- The root README now provides a choice of routes and a product preview. The original `TombojInnovateSkill.md` is unchanged.
+- The root README explains Innovate's origin, the assessment and optional build path, assistant/agent use, and when to choose each method. `TombojInnovateSkill.md` v1.1 carries that guidance into the instructions while retaining authorship and use terms.
 - `make-the-case/apps-script/` contains the installable Google Sheets application. `scripts/coach-dialogue-ui.*` and `scripts/build_coach_ui.py` generate its current dialogue layout while retaining the working gateway.
 - `make-the-case/skills/make-the-case/` contains the separate portable method; installing it is optional for app users.
 - `make-the-case/web-preview/` is a design-only prototype. `dist/` is the earlier browser workspace. Neither replaces the installable Apps Script kit.
@@ -46,6 +74,6 @@ Open the [five-view screenshot walkthrough](example-gallery.md). It follows one 
 
 The images capture the actual built v0.5.0 Coach file locally, in its labeled fictional demonstration mode. They show available interface states. They do not establish real AI response quality, Google permissions, provider billing, business savings, or adoption.
 
-64 local automated checks and documented local browser checks were completed before this documentation update. No GitHub CI checks were reported at the inspected head. The final installed-Sheet/provider walkthrough remains open; review the verification limits before publishing. This branch is prepared for review, and merging remains Rachel's decision.
+The application's [validation record](validation.md) documents 64 local automated checks and local browser checks, with live installed-Sheet/provider verification still open. Those application checks do not test every assistant's adherence to Innovate v1.1. The revised instructions explain intended behavior; completed cross-platform coaching validation is not claimed.
 
 The screenshot-led presentation follows the approach of [Tomboj VOC Signal-to-Change](https://github.com/rtomboj/tomboj-voc-signal-to-change): clear starting routes, synthetic examples, captions explaining the workflow, and explicit separation of previews from live results.
